@@ -14,6 +14,7 @@ const navLinks = [
   { to: "/security", label: "Security" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/analytics", label: "Analytics" },
+  { to: "/login", label: "Admin" },
   { to: "/contact", label: "Contact" },
 ];
 

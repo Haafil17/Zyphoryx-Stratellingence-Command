@@ -5,9 +5,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { ChatMessage, streamAnalyticsChat } from "@/lib/analytics-ai";
+import DynamicChart, { parseChartBlocks, ChartData } from "@/components/DynamicChart";
 
 interface AIChatPanelProps {
   fileData: string;
+  onChartsGenerated?: (charts: ChartData[]) => void;
 }
 
 const quickQuestions = [
@@ -16,14 +18,15 @@ const quickQuestions = [
   "Show risk analysis",
   "What if we cut costs 15%?",
   "Create a forecast",
+  "Generate charts from data",
 ];
 
-const AIChatPanel = ({ fileData }: AIChatPanelProps) => {
+const AIChatPanel = ({ fileData, onChartsGenerated }: AIChatPanelProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
       content:
-        "Welcome to **Zephoryx AI Analytics**. Upload your data files and ask me anything — I can analyze trends, generate charts, forecast outcomes, run what-if simulations, and provide strategic recommendations.",
+        "Welcome to **Zephoryx AI Analytics**. Upload your data files and ask me anything — I can analyze trends, **generate interactive charts**, forecast outcomes, run what-if simulations, and provide strategic recommendations.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -53,21 +56,39 @@ const AIChatPanel = ({ fileData }: AIChatPanelProps) => {
         assistantSoFar += chunk;
         setMessages((prev) => {
           const last = prev[prev.length - 1];
-          if (last?.role === "assistant" && prev.length > 1 && last.content === assistantSoFar.slice(0, -chunk.length)) {
-            return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
-          }
-          if (last?.role === "assistant" && assistantSoFar.length > chunk.length) {
+          if (last?.role === "assistant" && prev.length > 1 && assistantSoFar.length > chunk.length) {
             return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
           }
           return [...prev, { role: "assistant", content: assistantSoFar }];
         });
       },
-      onDone: () => setIsLoading(false),
+      onDone: () => {
+        setIsLoading(false);
+        // Extract charts from final message
+        const { charts } = parseChartBlocks(assistantSoFar);
+        if (charts.length > 0 && onChartsGenerated) {
+          onChartsGenerated(charts);
+        }
+      },
       onError: (error) => {
         toast.error(error);
         setIsLoading(false);
       },
     });
+  };
+
+  const renderMessage = (content: string) => {
+    const { text, charts } = parseChartBlocks(content);
+    return (
+      <>
+        <div className="prose prose-sm prose-invert max-w-none">
+          <ReactMarkdown>{text}</ReactMarkdown>
+        </div>
+        {charts.map((chart, i) => (
+          <DynamicChart key={i} chart={chart} />
+        ))}
+      </>
+    );
   };
 
   return (
@@ -85,19 +106,13 @@ const AIChatPanel = ({ fileData }: AIChatPanelProps) => {
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
-              className={`max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
+              className={`max-w-[90%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === "user"
                   ? "gradient-primary text-primary-foreground"
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
-              {msg.role === "assistant" ? (
-                <div className="prose prose-sm prose-invert max-w-none">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
-                </div>
-              ) : (
-                msg.content
-              )}
+              {msg.role === "assistant" ? renderMessage(msg.content) : msg.content}
             </div>
           </div>
         ))}
