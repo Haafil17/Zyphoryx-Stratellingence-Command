@@ -11,44 +11,31 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import AIChatPanel from "@/components/AIChatPanel";
+import DynamicChart, { ChartData } from "@/components/DynamicChart";
 import { parseFileContent } from "@/lib/analytics-ai";
 
-// Sample data for demo mode
-const sampleRevenue = [
-  { month: "Jan", value: 42000 }, { month: "Feb", value: 48000 },
-  { month: "Mar", value: 51000 }, { month: "Apr", value: 49000 },
-  { month: "May", value: 56000 }, { month: "Jun", value: 62000 },
-];
-
-const sampleCategories = [
-  { name: "Sales", value: 40 }, { name: "Marketing", value: 25 },
-  { name: "Operations", value: 20 }, { name: "R&D", value: 15 },
-];
-
 const COLORS = ["hsl(187,85%,53%)", "hsl(152,69%,45%)", "hsl(42,92%,56%)", "hsl(280,65%,60%)"];
-
-const sampleStory = `## Executive Summary — Q2 Performance
-
-**Revenue grew 12.3% QoQ**, driven primarily by the Sales division which exceeded targets by 15%. Marketing efficiency improved with cost-per-acquisition dropping 8%.
-
-### Key Drivers
-- **Sales team expansion** in APAC contributed $2.1M incremental revenue
-- **Product B launch** captured 28% market share in its segment
-- **Operational efficiency** gains reduced COGS by 4.2%
-
-### Risks Identified
-⚠️ **HR attrition** in Engineering is trending upward (+12% YoY) — requires immediate intervention
-⚠️ **Marketing budget** overrun by 8% — recommend reallocation from low-performing channels
-
-### Strategic Recommendation
-> Focus Q3 investment on APAC expansion and Product B scaling. Pause Channel C marketing spend and redirect to high-converting segments.`;
 
 const Analytics = () => {
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; content: string }[]>([]);
   const [activeTab, setActiveTab] = useState<"charts" | "story" | "table" | "forecast">("charts");
+  const [aiCharts, setAiCharts] = useState<ChartData[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fileData = uploadedFiles.map(f => `--- FILE: ${f.name} ---\n${f.content}`).join("\n\n");
+
+  // Parse uploaded data for table view
+  const getTableData = () => {
+    if (uploadedFiles.length === 0) return null;
+    try {
+      const first = uploadedFiles[0];
+      const parsed = JSON.parse(first.content);
+      if (parsed.headers && parsed.rows) return parsed;
+    } catch { /* not JSON table */ }
+    return null;
+  };
+
+  const tableData = getTableData();
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -66,12 +53,17 @@ const Analytics = () => {
     }
 
     setUploadedFiles((prev) => [...prev, ...parsed]);
-    toast.success(`${parsed.length} file(s) loaded. AI is ready to analyze!`);
+    toast.success(`${parsed.length} file(s) loaded. Ask AI to generate charts and analysis!`);
     if (fileRef.current) fileRef.current.value = "";
   };
 
   const removeFile = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleChartsGenerated = (charts: ChartData[]) => {
+    setAiCharts(prev => [...prev, ...charts]);
+    if (activeTab !== "charts") setActiveTab("charts");
   };
 
   return (
@@ -83,7 +75,7 @@ const Analytics = () => {
             Data Analytics & <span className="gradient-text">AI Intelligence</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Upload data, analyze with AI, visualize, forecast, and simulate scenarios
+            Upload data → AI analyzes → generates interactive charts, stories, forecasts & simulations
           </p>
         </motion.div>
 
@@ -106,7 +98,7 @@ const Analytics = () => {
               <Upload className="h-4 w-4 mr-2" /> Upload Files
             </Button>
             <span className="text-xs text-muted-foreground">
-              Supports CSV, JSON, TXT — AI will analyze your data instantly
+              Supports CSV, JSON, TXT — AI generates real charts from your data
             </span>
             {uploadedFiles.length > 0 && (
               <div className="flex gap-2 flex-wrap">
@@ -150,51 +142,32 @@ const Analytics = () => {
 
             {activeTab === "charts" && (
               <div className="space-y-4">
-                <div className="glass-card p-5">
-                  <h3 className="text-sm font-semibold mb-4">Revenue Trend</h3>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <AreaChart data={sampleRevenue}>
-                      <defs>
-                        <linearGradient id="aGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(187,85%,53%)" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="hsl(187,85%,53%)" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,15%,18%)" />
-                      <XAxis dataKey="month" stroke="hsl(215,15%,55%)" fontSize={12} />
-                      <YAxis stroke="hsl(215,15%,55%)" fontSize={12} />
-                      <Tooltip contentStyle={{ background: "hsl(222,22%,9%)", border: "1px solid hsl(222,15%,18%)", borderRadius: 8 }} />
-                      <Area type="monotone" dataKey="value" stroke="hsl(187,85%,53%)" fill="url(#aGrad)" strokeWidth={2} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="glass-card p-5">
-                    <h3 className="text-sm font-semibold mb-4">Category Breakdown</h3>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <PieChart>
-                        <Pie data={sampleCategories} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" paddingAngle={3}>
-                          {sampleCategories.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
-                        </Pie>
-                        <Tooltip contentStyle={{ background: "hsl(222,22%,9%)", border: "1px solid hsl(222,15%,18%)", borderRadius: 8 }} />
-                      </PieChart>
-                    </ResponsiveContainer>
+                {aiCharts.length > 0 ? (
+                  <>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="h-4 w-4 text-accent" />
+                      <span className="text-sm font-semibold">AI-Generated Charts</span>
+                      <button
+                        onClick={() => setAiCharts([])}
+                        className="ml-auto text-xs text-muted-foreground hover:text-destructive"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    {aiCharts.map((chart, i) => (
+                      <DynamicChart key={i} chart={chart} />
+                    ))}
+                  </>
+                ) : (
+                  <div className="glass-card p-8 text-center">
+                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="font-semibold mb-2">No Charts Yet</h3>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      Upload a data file and ask the AI to <strong>"Generate charts from data"</strong> or <strong>"Show revenue breakdown"</strong>. 
+                      Charts will appear here automatically.
+                    </p>
                   </div>
-                  <div className="glass-card p-5">
-                    <h3 className="text-sm font-semibold mb-4">Performance</h3>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <BarChart data={[
-                        { name: "Q1", value: 78 }, { name: "Q2", value: 85 },
-                        { name: "Q3", value: 91 }, { name: "Q4", value: 88 },
-                      ]}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,15%,18%)" />
-                        <XAxis dataKey="name" stroke="hsl(215,15%,55%)" fontSize={11} />
-                        <YAxis stroke="hsl(215,15%,55%)" fontSize={11} />
-                        <Bar dataKey="value" fill="hsl(152,69%,45%)" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+                )}
               </div>
             )}
 
@@ -202,65 +175,67 @@ const Analytics = () => {
               <div className="glass-card p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="h-4 w-4 text-accent" />
-                  <h3 className="text-sm font-semibold">AI-Generated Data Story</h3>
-                  <span className="text-xs text-muted-foreground ml-auto">Ask AI to generate a story from your data →</span>
+                  <h3 className="text-sm font-semibold">AI Data Story</h3>
                 </div>
-                <div className="prose prose-sm prose-invert max-w-none text-muted-foreground leading-relaxed whitespace-pre-wrap text-sm">
-                  {sampleStory}
-                </div>
+                {uploadedFiles.length > 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Ask the AI: <strong>"Create a data story"</strong> or <strong>"Generate executive summary"</strong> to get a narrative analysis of your uploaded data.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Upload data files first, then ask the AI to generate a data story.
+                  </p>
+                )}
               </div>
             )}
 
             {activeTab === "table" && (
               <div className="glass-card p-5 overflow-x-auto">
                 <h3 className="text-sm font-semibold mb-4">Data Table</h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-2 text-muted-foreground font-medium">Month</th>
-                      <th className="text-right py-2 text-muted-foreground font-medium">Revenue</th>
-                      <th className="text-right py-2 text-muted-foreground font-medium">Growth</th>
-                      <th className="text-right py-2 text-muted-foreground font-medium">Margin</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sampleRevenue.map((r, i) => (
-                      <tr key={r.month} className="border-b border-border/50">
-                        <td className="py-2">{r.month}</td>
-                        <td className="text-right">${(r.value / 1000).toFixed(0)}K</td>
-                        <td className="text-right text-success">{i === 0 ? "—" : `+${((r.value / sampleRevenue[i-1].value - 1) * 100).toFixed(1)}%`}</td>
-                        <td className="text-right">{(18 + Math.random() * 8).toFixed(1)}%</td>
+                {tableData ? (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        {tableData.headers.map((h: string) => (
+                          <th key={h} className="text-left py-2 text-muted-foreground font-medium px-2">{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {tableData.rows.slice(0, 50).map((row: Record<string, string>, i: number) => (
+                        <tr key={i} className="border-b border-border/50">
+                          {tableData.headers.map((h: string) => (
+                            <td key={h} className="py-2 px-2">{row[h]}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Upload a CSV file to see your data in table format.
+                  </p>
+                )}
               </div>
             )}
 
             {activeTab === "forecast" && (
-              <div className="glass-card p-5">
-                <h3 className="text-sm font-semibold mb-4">Predictive Forecast</h3>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={[
-                    ...sampleRevenue,
-                    { month: "Jul", value: 65000 },
-                    { month: "Aug", value: 68000 },
-                    { month: "Sep", value: 71000 },
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,15%,18%)" />
-                    <XAxis dataKey="month" stroke="hsl(215,15%,55%)" fontSize={12} />
-                    <YAxis stroke="hsl(215,15%,55%)" fontSize={12} />
-                    <Tooltip contentStyle={{ background: "hsl(222,22%,9%)", border: "1px solid hsl(222,15%,18%)", borderRadius: 8 }} />
-                    <Line type="monotone" dataKey="value" stroke="hsl(187,85%,53%)" strokeWidth={2} dot={{ fill: "hsl(187,85%,53%)" }} />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="glass-card p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold">Predictive Forecast</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Upload data and ask the AI: <strong>"Create a forecast"</strong> or <strong>"Predict next quarter revenue"</strong>. 
+                  The AI will generate forecast charts with confidence scoring.
+                </p>
               </div>
             )}
           </div>
 
           {/* AI Assistant — 2 cols */}
           <div className="lg:col-span-2">
-            <AIChatPanel fileData={fileData} />
+            <AIChatPanel fileData={fileData} onChartsGenerated={handleChartsGenerated} />
           </div>
         </div>
       </div>
