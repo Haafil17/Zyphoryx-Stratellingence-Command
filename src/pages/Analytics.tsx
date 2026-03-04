@@ -5,14 +5,15 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  Upload, FileText, Brain, BarChart3, TrendingUp,
-  Send, Sparkles, Table, BookOpen
+  Upload, FileText, BarChart3, TrendingUp,
+  Sparkles, Table, BookOpen, X
 } from "lucide-react";
 import { toast } from "sonner";
+import AIChatPanel from "@/components/AIChatPanel";
+import { parseFileContent } from "@/lib/analytics-ai";
 
-// Mock data for when user hasn't uploaded files yet
+// Sample data for demo mode
 const sampleRevenue = [
   { month: "Jan", value: 42000 }, { month: "Feb", value: 48000 },
   { month: "Mar", value: 51000 }, { month: "Apr", value: 49000 },
@@ -40,51 +41,37 @@ const sampleStory = `## Executive Summary — Q2 Performance
 ⚠️ **Marketing budget** overrun by 8% — recommend reallocation from low-performing channels
 
 ### Strategic Recommendation
-> Focus Q3 investment on APAC expansion and Product B scaling. Pause Channel C marketing spend and redirect to high-converting segments. Address Engineering retention with compensation review.
-
-### Forecast
-If current trajectory holds, **Q3 revenue is projected at $6.8M** (confidence: 82%). Downside scenario at $6.1M if attrition issues persist.`;
+> Focus Q3 investment on APAC expansion and Product B scaling. Pause Channel C marketing spend and redirect to high-converting segments.`;
 
 const Analytics = () => {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([
-    { role: "assistant", content: "Welcome to the Analytics Engine. Upload your data files or ask me anything about the current dataset. I can create charts, generate stories, forecast trends, and simulate scenarios." },
-  ]);
-  const [chatInput, setChatInput] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; content: string }[]>([]);
   const [activeTab, setActiveTab] = useState<"charts" | "story" | "table" | "forecast">("charts");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fileData = uploadedFiles.map(f => `--- FILE: ${f.name} ---\n${f.content}`).join("\n\n");
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setUploadedFiles((prev) => [...prev, ...files]);
-    toast.success(`${files.length} file(s) uploaded. AI is analyzing...`);
-    // In real implementation, this would send to AI backend
+    if (!files.length) return;
+
+    const parsed: { name: string; content: string }[] = [];
+    for (const file of files) {
+      try {
+        const text = await file.text();
+        const content = parseFileContent(text, file.name);
+        parsed.push({ name: file.name, content });
+      } catch {
+        toast.error(`Failed to read ${file.name}`);
+      }
+    }
+
+    setUploadedFiles((prev) => [...prev, ...parsed]);
+    toast.success(`${parsed.length} file(s) loaded. AI is ready to analyze!`);
+    if (fileRef.current) fileRef.current.value = "";
   };
 
-  const handleChat = () => {
-    if (!chatInput.trim()) return;
-    const userMsg = chatInput.trim();
-    setChatMessages((prev) => [...prev, { role: "user", content: userMsg }]);
-    setChatInput("");
-
-    // Mock AI response - in real implementation this calls the AI backend
-    setTimeout(() => {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: `Based on the data analysis:\n\n${
-            userMsg.toLowerCase().includes("revenue")
-              ? "Revenue shows a strong upward trend with 12.3% QoQ growth. The primary driver is APAC expansion. I recommend focusing Q3 budget on scaling this channel."
-              : userMsg.toLowerCase().includes("risk")
-              ? "Three key risks detected: 1) Engineering attrition trending +12% YoY, 2) Marketing budget overrun at 8%, 3) Supply chain delays in Q3 pipeline. Recommend immediate HR intervention and budget reallocation."
-              : userMsg.toLowerCase().includes("what if")
-              ? "Running scenario simulation... If we implement the proposed changes: Revenue impact: +$1.2M, Risk reduction: 35%, Cost savings: $340K. Confidence level: 78%. Recommended action: Proceed with Phase 1."
-              : "I've analyzed the query against the current dataset. The data suggests strong performance in core metrics with opportunities for optimization in marketing efficiency and talent retention. Would you like me to drill deeper into any specific area?"
-          }`,
-        },
-      ]);
-    }, 1200);
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -93,25 +80,21 @@ const Analytics = () => {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
           <h1 className="text-2xl font-bold flex items-center gap-3">
             <BarChart3 className="h-6 w-6 text-primary" />
-            Data Analytics & <span className="gradient-text">Storytelling</span>
+            Data Analytics & <span className="gradient-text">AI Intelligence</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Upload data, analyze, visualize, and generate AI-powered insights
+            Upload data, analyze with AI, visualize, forecast, and simulate scenarios
           </p>
         </motion.div>
 
         {/* Upload Zone */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card p-6 mb-6"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-6">
           <div className="flex flex-wrap items-center gap-4">
             <input
               ref={fileRef}
               type="file"
               multiple
-              accept=".pdf,.xlsx,.xls,.csv,.json,.txt,.doc,.docx"
+              accept=".csv,.json,.txt,.tsv"
               className="hidden"
               onChange={handleUpload}
             />
@@ -123,13 +106,16 @@ const Analytics = () => {
               <Upload className="h-4 w-4 mr-2" /> Upload Files
             </Button>
             <span className="text-xs text-muted-foreground">
-              Supports PDF, Excel, CSV, JSON, Documents
+              Supports CSV, JSON, TXT — AI will analyze your data instantly
             </span>
             {uploadedFiles.length > 0 && (
               <div className="flex gap-2 flex-wrap">
                 {uploadedFiles.map((f, i) => (
                   <div key={i} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs">
                     <FileText className="h-3 w-3" /> {f.name}
+                    <button onClick={() => removeFile(i)} className="ml-1 hover:text-destructive">
+                      <X className="h-3 w-3" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -217,6 +203,7 @@ const Analytics = () => {
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="h-4 w-4 text-accent" />
                   <h3 className="text-sm font-semibold">AI-Generated Data Story</h3>
+                  <span className="text-xs text-muted-foreground ml-auto">Ask AI to generate a story from your data →</span>
                 </div>
                 <div className="prose prose-sm prose-invert max-w-none text-muted-foreground leading-relaxed whitespace-pre-wrap text-sm">
                   {sampleStory}
@@ -267,63 +254,13 @@ const Analytics = () => {
                     <Line type="monotone" dataKey="value" stroke="hsl(187,85%,53%)" strokeWidth={2} dot={{ fill: "hsl(187,85%,53%)" }} />
                   </LineChart>
                 </ResponsiveContainer>
-                <div className="mt-4 p-3 rounded-lg bg-primary/10 text-xs text-primary">
-                  <Brain className="h-3 w-3 inline mr-1" />
-                  AI Forecast: Revenue projected to reach $71K by September (confidence: 82%). Growth rate steady at ~4.5% MoM.
-                </div>
               </div>
             )}
           </div>
 
           {/* AI Assistant — 2 cols */}
           <div className="lg:col-span-2">
-            <div className="glass-card h-[700px] flex flex-col">
-              <div className="p-4 border-b border-border/50 flex items-center gap-2">
-                <Brain className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-sm">AI Analytics Assistant</h3>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {chatMessages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div
-                      className={`max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                        msg.role === "user"
-                          ? "gradient-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground"
-                      }`}
-                    >
-                      {msg.content}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="p-4 border-t border-border/50">
-                <div className="flex gap-2">
-                  <Textarea
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleChat())}
-                    placeholder="Ask about data, trends, risks, what-if scenarios..."
-                    rows={2}
-                    className="bg-secondary border-border text-sm resize-none"
-                  />
-                  <Button onClick={handleChat} size="icon" className="gradient-primary text-primary-foreground shrink-0 self-end">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex gap-2 mt-2 flex-wrap">
-                  {["Why did revenue change?", "Show risk analysis", "What if we cut costs 15%?"].map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => { setChatInput(q); }}
-                      className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <AIChatPanel fileData={fileData} />
           </div>
         </div>
       </div>
