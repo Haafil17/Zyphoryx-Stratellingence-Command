@@ -5,12 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Index from "./pages/Index";
-import Problem from "./pages/Problem";
-import Solution from "./pages/Solution";
+import ProblemSolution from "./pages/ProblemSolution";
 import Features from "./pages/Features";
-import HowItWorks from "./pages/HowItWorks";
-import Industries from "./pages/Industries";
-import SecurityPage from "./pages/Security";
+import Platform from "./pages/Platform";
 import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
@@ -29,12 +26,13 @@ const App = () => (
         <Layout>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/problem" element={<Problem />} />
-            <Route path="/solution" element={<Solution />} />
+            <Route path="/problem" element={<ProblemSolution />} />
+            <Route path="/solution" element={<ProblemSolution />} />
             <Route path="/features" element={<Features />} />
-            <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/industries" element={<Industries />} />
-            <Route path="/security" element={<SecurityPage />} />
+            <Route path="/how-it-works" element={<Platform />} />
+            <Route path="/industries" element={<Platform />} />
+            <Route path="/security" element={<Platform />} />
+            <Route path="/platform" element={<Platform />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/analytics" element={<Analytics />} />
