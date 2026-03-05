@@ -8,14 +8,14 @@ import {
 import heroBg from "@/assets/hero-bg.jpg";
 
 const features = [
-  { icon: BarChart3, title: "Data Analytics Engine", desc: "Multi-source ingestion, pattern detection, KPI dashboards" },
-  { icon: FileSearch, title: "Document Intelligence", desc: "Upload PDFs, Excel, contracts — AI extracts insights" },
-  { icon: TrendingUp, title: "Predictive Forecasting", desc: "Revenue trends, growth projections, confidence scoring" },
-  { icon: Shuffle, title: "Scenario Simulation", desc: "What-if modeling for strategic decisions" },
-  { icon: MessageSquare, title: "AI Business Assistant", desc: "Ask questions, get data-driven answers" },
-  { icon: Users, title: "Co-Founder Mode", desc: "Your AI strategic partner and growth advisor" },
-  { icon: LayoutDashboard, title: "Command Center", desc: "Real-time KPIs, risk maps, strategic alerts" },
-  { icon: Zap, title: "Data Storytelling", desc: "Convert raw data into executive narratives" },
+  { icon: BarChart3, title: "Data Analytics Engine", desc: "Multi-source ingestion, pattern detection, and interactive KPI dashboards." },
+  { icon: FileSearch, title: "Document Intelligence", desc: "Upload PDFs, Excel, contracts — AI extracts insights and summaries." },
+  { icon: TrendingUp, title: "Predictive Forecasting", desc: "Revenue trends, growth projections, and confidence scoring." },
+  { icon: Shuffle, title: "Scenario Simulation", desc: "What-if modeling for strategic decision-making." },
+  { icon: MessageSquare, title: "AI Business Assistant", desc: "Ask questions, get data-driven strategic answers." },
+  { icon: Users, title: "Co-Founder Mode", desc: "Your AI strategic partner and growth advisor." },
+  { icon: LayoutDashboard, title: "Command Center", desc: "Real-time KPIs, risk maps, and strategic alerts." },
+  { icon: Zap, title: "Data Storytelling", desc: "Convert raw data into executive narratives." },
 ];
 
 const fadeUp = {
@@ -43,7 +43,7 @@ const Index = () => {
             transition={{ duration: 0.8 }}
             className="max-w-3xl"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm font-medium mb-6">
               <Brain className="h-4 w-4" />
               Strategic Intelligence Platform
             </div>
@@ -55,9 +55,8 @@ const Index = () => {
               <span className="text-foreground">Decision Engine</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl mb-8 leading-relaxed">
-              Transform raw data into strategic power. Predict, simulate, and
-              command your business with AI-driven intelligence that thinks
-              like a co-founder.
+              Transform raw data into strategic power. Predict outcomes, simulate scenarios,
+              and command your business with AI-driven intelligence that thinks like a co-founder.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/contact">
@@ -66,7 +65,7 @@ const Index = () => {
                 </Button>
               </Link>
               <Link to="/dashboard">
-                <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-secondary px-8">
+                <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-secondary px-8 font-semibold">
                   Enter Platform
                 </Button>
               </Link>
@@ -84,10 +83,10 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl md:text-4xl font-black mb-4">
               One Platform. <span className="gradient-text">Total Intelligence.</span>
             </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto">
+            <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed">
               Every tool your enterprise needs to dominate data-driven strategy.
             </p>
           </motion.div>
@@ -103,8 +102,8 @@ const Index = () => {
                 className="glass-card p-6 hover:glow-border transition-all duration-300 group"
               >
                 <f.icon className="h-8 w-8 text-primary mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold mb-2">{f.title}</h3>
-                <p className="text-sm text-muted-foreground">{f.desc}</p>
+                <h3 className="font-bold mb-2">{f.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -115,10 +114,10 @@ const Index = () => {
       <section className="py-20">
         <div className="container">
           <div className="glass-card glow-border p-12 text-center">
-            <h2 className="text-3xl font-bold mb-4">
+            <h2 className="text-3xl font-black mb-4">
               Ready to <span className="gradient-text">Transform</span> Your Strategy?
             </h2>
-            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+            <p className="text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
               Join enterprises already using Zephoryx AI to outthink, outperform, and outlast the competition.
             </p>
             <Link to="/contact">

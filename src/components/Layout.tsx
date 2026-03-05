@@ -6,12 +6,9 @@ import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { to: "/", label: "Home" },
-  { to: "/problem", label: "The Problem" },
-  { to: "/solution", label: "Solution" },
+  { to: "/problem", label: "Problem & Solution" },
   { to: "/features", label: "Features" },
-  { to: "/how-it-works", label: "How It Works" },
-  { to: "/industries", label: "Industries" },
-  { to: "/security", label: "Security" },
+  { to: "/platform", label: "Platform" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/analytics", label: "Analytics" },
   { to: "/login", label: "Admin" },
@@ -39,7 +36,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                   location.pathname === link.to
                     ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground"
@@ -77,7 +74,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   key={link.to}
                   to={link.to}
                   onClick={() => setMobileOpen(false)}
-                  className={`px-3 py-2 text-sm rounded-md ${
+                  className={`px-3 py-2 text-sm font-medium rounded-md ${
                     location.pathname === link.to
                       ? "text-primary bg-primary/10"
                       : "text-muted-foreground"
@@ -99,7 +96,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <Brain className="h-5 w-5 text-primary" />
             <span className="font-bold gradient-text">Zephoryx AI</span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground font-medium">
             Strategic Intelligence & Decision Ecosystem
           </p>
           <p className="text-xs text-muted-foreground mt-2">

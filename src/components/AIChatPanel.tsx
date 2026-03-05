@@ -10,23 +10,26 @@ import DynamicChart, { parseChartBlocks, ChartData } from "@/components/DynamicC
 interface AIChatPanelProps {
   fileData: string;
   onChartsGenerated?: (charts: ChartData[]) => void;
+  onStoryGenerated?: (story: string) => void;
 }
 
 const quickQuestions = [
   "Summarize this data",
+  "Generate charts from data",
+  "Create a data story",
   "What are the key trends?",
   "Show risk analysis",
   "What if we cut costs 15%?",
   "Create a forecast",
-  "Generate charts from data",
+  "Suggest growth strategies",
 ];
 
-const AIChatPanel = ({ fileData, onChartsGenerated }: AIChatPanelProps) => {
+const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPanelProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
       content:
-        "Welcome to **Zephoryx AI Analytics**. Upload your data files and ask me anything — I can analyze trends, **generate interactive charts**, forecast outcomes, run what-if simulations, and provide strategic recommendations.",
+        "Welcome to **Zephoryx AI Analytics**. Upload your data files and ask me anything — I can analyze trends, **generate interactive charts**, create data stories, forecast outcomes, run what-if simulations, and provide strategic recommendations.\n\nTry asking:\n- \"Generate charts from data\"\n- \"Create a data story\"\n- \"What if we increase price by 10%?\"",
     },
   ]);
   const [input, setInput] = useState("");
@@ -39,9 +42,10 @@ const AIChatPanel = ({ fileData, onChartsGenerated }: AIChatPanelProps) => {
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-    const userMsg: ChatMessage = { role: "user", content: input.trim() };
+  const handleSend = async (customInput?: string) => {
+    const msg = customInput || input.trim();
+    if (!msg || isLoading) return;
+    const userMsg: ChatMessage = { role: "user", content: msg };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
@@ -64,10 +68,14 @@ const AIChatPanel = ({ fileData, onChartsGenerated }: AIChatPanelProps) => {
       },
       onDone: () => {
         setIsLoading(false);
-        // Extract charts from final message
-        const { charts } = parseChartBlocks(assistantSoFar);
+        const { charts, text } = parseChartBlocks(assistantSoFar);
         if (charts.length > 0 && onChartsGenerated) {
           onChartsGenerated(charts);
+        }
+        // If it looks like a story/summary, send to story panel
+        const lowerInput = msg.toLowerCase();
+        if ((lowerInput.includes("story") || lowerInput.includes("summary") || lowerInput.includes("narrative") || lowerInput.includes("executive")) && onStoryGenerated) {
+          onStoryGenerated(text);
         }
       },
       onError: (error) => {
@@ -81,7 +89,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated }: AIChatPanelProps) => {
     const { text, charts } = parseChartBlocks(content);
     return (
       <>
-        <div className="prose prose-sm prose-invert max-w-none">
+        <div className="prose prose-sm prose-invert max-w-none [&_p]:mb-2 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_li]:text-sm">
           <ReactMarkdown>{text}</ReactMarkdown>
         </div>
         {charts.map((chart, i) => (
@@ -92,12 +100,12 @@ const AIChatPanel = ({ fileData, onChartsGenerated }: AIChatPanelProps) => {
   };
 
   return (
-    <div className="glass-card h-[700px] flex flex-col">
+    <div className="glass-card h-[750px] flex flex-col">
       <div className="p-4 border-b border-border/50 flex items-center gap-2">
         <Brain className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold text-sm">AI Analytics Assistant</h3>
+        <h3 className="font-bold text-sm">AI Analytics Assistant</h3>
         {fileData && (
-          <span className="ml-auto text-xs text-primary/70 flex items-center gap-1">
+          <span className="ml-auto text-xs text-primary/70 flex items-center gap-1 font-medium">
             <Sparkles className="h-3 w-3" /> Data loaded
           </span>
         )}
@@ -108,7 +116,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated }: AIChatPanelProps) => {
             <div
               className={`max-w-[90%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === "user"
-                  ? "gradient-primary text-primary-foreground"
+                  ? "gradient-primary text-primary-foreground font-medium"
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
@@ -119,7 +127,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated }: AIChatPanelProps) => {
         {isLoading && messages[messages.length - 1]?.role === "user" && (
           <div className="flex justify-start">
             <div className="bg-secondary rounded-xl px-4 py-3 text-sm flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Analyzing...
+              <Loader2 className="h-4 w-4 animate-spin" /> Analyzing your data...
             </div>
           </div>
         )}
@@ -141,7 +149,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated }: AIChatPanelProps) => {
             disabled={isLoading}
           />
           <Button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             size="icon"
             className="gradient-primary text-primary-foreground shrink-0 self-end"
             disabled={isLoading}
@@ -149,12 +157,12 @@ const AIChatPanel = ({ fileData, onChartsGenerated }: AIChatPanelProps) => {
             <Send className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex gap-2 mt-2 flex-wrap">
+        <div className="flex gap-1.5 mt-2 flex-wrap">
           {quickQuestions.map((q) => (
             <button
               key={q}
-              onClick={() => setInput(q)}
-              className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
+              onClick={() => handleSend(q)}
+              className="text-[11px] px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors font-medium"
               disabled={isLoading}
             >
               {q}
