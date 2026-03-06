@@ -11,7 +11,7 @@ const navLinks = [
   { to: "/platform", label: "Platform" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/analytics", label: "Analytics" },
-  { to: "/login", label: "Admin" },
+  { to: "/login", label: "Login" },
   { to: "/contact", label: "Contact" },
 ];
 
@@ -23,11 +23,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <div className="min-h-screen bg-background text-foreground">
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2.5">
             <Brain className="h-7 w-7 text-primary" />
-            <span className="text-lg font-bold tracking-tight">
+            <span className="text-lg font-black tracking-tight">
               <span className="gradient-text">Zephoryx</span>{" "}
-              <span className="text-muted-foreground font-medium text-sm">AI</span>
+              <span className="text-muted-foreground font-semibold text-sm">AI</span>
             </span>
           </Link>
 
@@ -36,7 +36,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
                   location.pathname === link.to
                     ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground"
@@ -49,7 +49,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
           <div className="flex items-center gap-3">
             <Link to="/contact">
-              <Button size="sm" className="hidden sm:inline-flex gradient-primary text-primary-foreground font-semibold border-0">
+              <Button size="sm" className="hidden sm:inline-flex gradient-primary text-primary-foreground font-bold border-0">
                 Request Demo
               </Button>
             </Link>
@@ -74,7 +74,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   key={link.to}
                   to={link.to}
                   onClick={() => setMobileOpen(false)}
-                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                  className={`px-3 py-2.5 text-sm font-semibold rounded-md ${
                     location.pathname === link.to
                       ? "text-primary bg-primary/10"
                       : "text-muted-foreground"
@@ -90,16 +90,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       <main className="pt-16">{children}</main>
 
-      <footer className="border-t border-border/50 py-12 mt-20">
+      <footer className="border-t border-border/50 py-16 mt-20">
         <div className="container text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Brain className="h-5 w-5 text-primary" />
-            <span className="font-bold gradient-text">Zephoryx AI</span>
+          <div className="flex items-center justify-center gap-2.5 mb-4">
+            <Brain className="h-6 w-6 text-primary" />
+            <span className="font-black text-lg gradient-text">Zephoryx AI</span>
           </div>
-          <p className="text-sm text-muted-foreground font-medium">
+          <p className="text-sm text-muted-foreground font-semibold">
             Strategic Intelligence & Decision Ecosystem
           </p>
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-xs text-muted-foreground mt-3">
             © {new Date().getFullYear()} Zephoryx AI. All rights reserved.
           </p>
         </div>
