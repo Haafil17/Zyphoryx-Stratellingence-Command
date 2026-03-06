@@ -11,11 +11,12 @@ import ReactMarkdown from "react-markdown";
 import AIChatPanel from "@/components/AIChatPanel";
 import DynamicChart, { ChartData } from "@/components/DynamicChart";
 import { parseFileContent } from "@/lib/analytics-ai";
+import { useFileStore } from "@/contexts/FileStoreContext";
 
 const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
 
 const Analytics = () => {
-  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
+  const { analyticsFiles: uploadedFiles, setAnalyticsFiles: setUploadedFiles } = useFileStore();
   const [activeTab, setActiveTab] = useState<"charts" | "story" | "table" | "forecast" | "simulation" | "cofound">("charts");
   const [aiCharts, setAiCharts] = useState<ChartData[]>([]);
   const [aiStory, setAiStory] = useState<string>("");
