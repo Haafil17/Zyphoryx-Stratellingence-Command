@@ -3,74 +3,135 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Brain, BarChart3, FileSearch, TrendingUp, Shuffle,
-  MessageSquare, Users, LayoutDashboard, ArrowRight, Zap
+  MessageSquare, Users, Zap, ArrowRight, Sparkles, BookOpen
 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const features = [
-  { icon: BarChart3, title: "Data Analytics Engine", desc: "Multi-source ingestion, pattern detection, and interactive KPI dashboards." },
-  { icon: FileSearch, title: "Document Intelligence", desc: "Upload PDFs, Excel, contracts — AI extracts insights and summaries." },
-  { icon: TrendingUp, title: "Predictive Forecasting", desc: "Revenue trends, growth projections, and confidence scoring." },
-  { icon: Shuffle, title: "Scenario Simulation", desc: "What-if modeling for strategic decision-making." },
-  { icon: MessageSquare, title: "AI Business Assistant", desc: "Ask questions, get data-driven strategic answers." },
-  { icon: Users, title: "Co-Founder Mode", desc: "Your AI strategic partner and growth advisor." },
-  { icon: LayoutDashboard, title: "Command Center", desc: "Real-time KPIs, risk maps, and strategic alerts." },
-  { icon: Zap, title: "Data Storytelling", desc: "Convert raw data into executive narratives." },
+  {
+    icon: Sparkles,
+    title: "AI-Powered Data Intelligence",
+    desc: "Upload your company data and instantly transform it into powerful insights, visualizations, and strategic reports.",
+  },
+  {
+    icon: BookOpen,
+    title: "Data Storytelling Engine",
+    desc: "Complex datasets are converted into clear stories, charts, and explanations that anyone in your company can understand.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Predictive Business Forecasting",
+    desc: "The platform analyzes patterns in your data and predicts future trends, opportunities, and risks.",
+  },
+  {
+    icon: MessageSquare,
+    title: "AI Decision Assistant",
+    desc: "Ask questions about your business and get smart recommendations on what actions to take.",
+  },
+  {
+    icon: Brain,
+    title: "Strategy Co-Founder AI",
+    desc: "The system acts like a virtual business advisor, suggesting improvements, growth strategies, and smarter decisions.",
+  },
+  {
+    icon: BarChart3,
+    title: "All-in-One Analytics Platform",
+    desc: "Documents, spreadsheets, datasets, charts, insights, predictions, and recommendations in a single powerful workspace.",
+  },
+  {
+    icon: Users,
+    title: "Built for Companies",
+    desc: "Designed specifically for businesses that want to make faster, smarter, and data-driven decisions.",
+  },
+  {
+    icon: Shuffle,
+    title: "Scenario Simulation",
+    desc: "Run what-if models to test pricing changes, budget cuts, expansion plans, and strategic pivots before committing.",
+  },
 ];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
-    opacity: 1, y: 0,
-    transition: { delay: i * 0.1, duration: 0.5 },
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.08, duration: 0.5 },
   }),
 };
+
+const stats = [
+  { value: "10x", label: "Faster Insights" },
+  { value: "95%", label: "Accuracy Rate" },
+  { value: "500+", label: "Data Sources" },
+  { value: "24/7", label: "AI Availability" },
+];
 
 const Index = () => {
   return (
     <div>
       {/* Hero */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[92vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBg} alt="" className="w-full h-full object-cover opacity-30" />
+          <img src={heroBg} alt="" className="w-full h-full object-cover opacity-20" />
           <div className="absolute inset-0 neural-bg" />
-          <div className="absolute inset-0 grid-pattern opacity-20" />
+          <div className="absolute inset-0 grid-pattern opacity-10" />
         </div>
-        <div className="container relative z-10 py-20">
+        <div className="container relative z-10 py-24">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="max-w-3xl"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm font-semibold mb-8">
               <Brain className="h-4 w-4" />
               Strategic Intelligence Platform
             </div>
-            <h1 className="text-5xl md:text-7xl font-black leading-[1.05] mb-6">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[1.02] mb-8 tracking-tight">
               <span className="gradient-text">Zephoryx AI</span>
               <br />
               <span className="text-foreground">Your Strategic</span>
               <br />
               <span className="text-foreground">Decision Engine</span>
             </h1>
-            <p className="text-lg text-muted-foreground max-w-xl mb-8 leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed font-medium">
               Transform raw data into strategic power. Predict outcomes, simulate scenarios,
               and command your business with AI-driven intelligence that thinks like a co-founder.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/contact">
-                <Button size="lg" className="gradient-primary text-primary-foreground font-semibold border-0 px-8">
-                  Request Demo <ArrowRight className="ml-2 h-4 w-4" />
+                <Button size="lg" className="gradient-primary text-primary-foreground font-bold border-0 px-10 py-6 text-base">
+                  Request Demo <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/dashboard">
-                <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-secondary px-8 font-semibold">
+                <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-secondary px-10 py-6 text-base font-bold">
                   Enter Platform
                 </Button>
               </Link>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="py-16 border-y border-border/30">
+        <div className="container">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="text-center"
+              >
+                <div className="text-4xl md:text-5xl font-black gradient-text mb-2">{s.value}</div>
+                <div className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -83,14 +144,14 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-black mb-4">
+            <h2 className="text-3xl md:text-5xl font-black mb-5 tracking-tight">
               One Platform. <span className="gradient-text">Total Intelligence.</span>
             </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed">
-              Every tool your enterprise needs to dominate data-driven strategy.
+            <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed text-lg font-medium">
+              Every tool your enterprise needs to dominate data-driven strategy — all powered by AI that understands your business.
             </p>
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {features.map((f, i) => (
               <motion.div
                 key={f.title}
@@ -99,10 +160,12 @@ const Index = () => {
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
-                className="glass-card p-6 hover:glow-border transition-all duration-300 group"
+                className="glass-card p-7 hover:glow-border transition-all duration-300 group"
               >
-                <f.icon className="h-8 w-8 text-primary mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="font-bold mb-2">{f.title}</h3>
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
+                  <f.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-bold text-base mb-3">{f.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
@@ -110,21 +173,65 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20">
+      {/* How It Works */}
+      <section className="py-20 border-t border-border/30">
         <div className="container">
-          <div className="glass-card glow-border p-12 text-center">
-            <h2 className="text-3xl font-black mb-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">
+              How <span className="gradient-text">It Works</span>
+            </h2>
+            <p className="text-muted-foreground max-w-lg mx-auto text-lg font-medium">Three steps to strategic intelligence.</p>
+          </motion.div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            {[
+              { step: "01", title: "Upload Your Data", desc: "Drop in your CSV, JSON, PDF, or Excel files. Revenue reports, expense logs, market data — any format works." },
+              { step: "02", title: "AI Analyzes Everything", desc: "Our AI engine detects patterns, anomalies, and trends. It generates charts, forecasts, and strategic insights automatically." },
+              { step: "03", title: "Make Smarter Decisions", desc: "Get executive summaries, run what-if simulations, and receive actionable recommendations to grow your business." },
+            ].map((item, i) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+                className="text-center"
+              >
+                <div className="text-5xl font-black gradient-text mb-4">{item.step}</div>
+                <h3 className="text-lg font-bold mb-3">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-24">
+        <div className="container">
+          <div className="glass-card glow-border p-16 text-center">
+            <h2 className="text-3xl md:text-5xl font-black mb-5 tracking-tight">
               Ready to <span className="gradient-text">Transform</span> Your Strategy?
             </h2>
-            <p className="text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
+            <p className="text-muted-foreground mb-10 max-w-lg mx-auto leading-relaxed text-lg font-medium">
               Join enterprises already using Zephoryx AI to outthink, outperform, and outlast the competition.
             </p>
-            <Link to="/contact">
-              <Button size="lg" className="gradient-primary text-primary-foreground font-semibold border-0 px-10">
-                Get Started <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link to="/contact">
+                <Button size="lg" className="gradient-primary text-primary-foreground font-bold border-0 px-12 py-6 text-base">
+                  Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/analytics">
+                <Button size="lg" variant="outline" className="border-border font-bold px-12 py-6 text-base">
+                  Try Analytics
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

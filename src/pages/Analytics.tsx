@@ -3,15 +3,19 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Upload, FileText, BarChart3, TrendingUp,
-  Sparkles, Table, BookOpen, X, Brain, Shuffle, MessageSquare
+  Sparkles, Table, BookOpen, X, Brain, Shuffle,
+  FileImage, FileSpreadsheet, Image
 } from "lucide-react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 import AIChatPanel from "@/components/AIChatPanel";
 import DynamicChart, { ChartData } from "@/components/DynamicChart";
 import { parseFileContent } from "@/lib/analytics-ai";
 
+const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
+
 const Analytics = () => {
-  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; content: string }[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
   const [activeTab, setActiveTab] = useState<"charts" | "story" | "table" | "forecast" | "simulation" | "cofound">("charts");
   const [aiCharts, setAiCharts] = useState<ChartData[]>([]);
   const [aiStory, setAiStory] = useState<string>("");
@@ -21,11 +25,12 @@ const Analytics = () => {
 
   const getTableData = () => {
     if (uploadedFiles.length === 0) return null;
-    try {
-      const first = uploadedFiles[0];
-      const parsed = JSON.parse(first.content);
-      if (parsed.headers && parsed.rows) return parsed;
-    } catch { /* not JSON table */ }
+    for (const f of uploadedFiles) {
+      try {
+        const parsed = JSON.parse(f.content);
+        if (parsed.headers && parsed.rows) return parsed;
+      } catch { /* skip */ }
+    }
     return null;
   };
 
@@ -35,19 +40,27 @@ const Analytics = () => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    const parsed: { name: string; content: string }[] = [];
+    const parsed: { name: string; content: string; type: string }[] = [];
     for (const file of files) {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
+      const isImage = ["jpeg", "jpg", "png", "gif", "webp", "svg"].includes(ext);
+      const isBinary = ["pdf", "xlsx", "xls"].includes(ext);
+
       try {
-        const text = await file.text();
-        const content = parseFileContent(text, file.name);
-        parsed.push({ name: file.name, content });
+        if (isImage || isBinary) {
+          parsed.push({ name: file.name, content: `[${isImage ? "Image" : "Binary"}: ${file.name}]`, type: ext });
+        } else {
+          const text = await file.text();
+          const content = parseFileContent(text, file.name);
+          parsed.push({ name: file.name, content, type: ext });
+        }
       } catch {
         toast.error(`Failed to read ${file.name}`);
       }
     }
 
     setUploadedFiles((prev) => [...prev, ...parsed]);
-    toast.success(`${parsed.length} file(s) loaded. Ask AI to generate charts and analysis!`);
+    toast.success(`${parsed.length} file(s) loaded — ask AI to analyze!`);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -57,11 +70,18 @@ const Analytics = () => {
 
   const handleChartsGenerated = (charts: ChartData[]) => {
     setAiCharts(prev => [...prev, ...charts]);
-    if (activeTab !== "charts") setActiveTab("charts");
+    setActiveTab("charts");
   };
 
   const handleStoryGenerated = (story: string) => {
     setAiStory(story);
+    setActiveTab("story");
+  };
+
+  const getFileIcon = (type: string) => {
+    if (["jpeg", "jpg", "png", "gif", "webp", "svg"].includes(type)) return FileImage;
+    if (["xlsx", "xls"].includes(type)) return FileSpreadsheet;
+    return FileText;
   };
 
   const tabs = [
@@ -77,51 +97,54 @@ const Analytics = () => {
     <div className="neural-bg min-h-screen">
       <div className="container py-8">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-black flex items-center gap-3">
-            <BarChart3 className="h-7 w-7 text-primary" />
+          <h1 className="text-3xl md:text-4xl font-black flex items-center gap-3 tracking-tight">
+            <BarChart3 className="h-8 w-8 text-primary" />
             Data Analytics & <span className="gradient-text">AI Intelligence</span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-2 max-w-2xl leading-relaxed">
-            Upload your data files → AI analyzes patterns and anomalies → generates interactive charts, executive stories, forecasts, and strategic simulations in real time.
+          <p className="text-sm text-muted-foreground mt-2 max-w-2xl leading-relaxed font-medium">
+            Upload your data → AI analyzes patterns → generates interactive charts, executive stories, forecasts, and strategic simulations.
           </p>
         </motion.div>
 
         {/* Upload Zone */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5 mb-6">
           <div className="flex flex-wrap items-center gap-4">
-            <input ref={fileRef} type="file" multiple accept=".csv,.json,.txt,.tsv" className="hidden" onChange={handleUpload} />
-            <Button variant="outline" onClick={() => fileRef.current?.click()} className="border-primary/30 text-primary hover:bg-primary/10">
+            <input ref={fileRef} type="file" multiple accept={ACCEPTED_FILES} className="hidden" onChange={handleUpload} />
+            <Button variant="outline" onClick={() => fileRef.current?.click()} className="border-primary/30 text-primary hover:bg-primary/10 font-bold">
               <Upload className="h-4 w-4 mr-2" /> Upload Files
             </Button>
-            <span className="text-xs text-muted-foreground">
-              Supports CSV, JSON, TXT — AI generates real charts from your data
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1.5 font-medium">
+              <Image className="h-3 w-3" />
+              CSV, JSON, TXT, PDF, Excel, JPEG, PNG, GIF, WebP, SVG
             </span>
-            {uploadedFiles.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                {uploadedFiles.map((f, i) => (
-                  <div key={i} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                    <FileText className="h-3 w-3" /> {f.name}
+          </div>
+          {uploadedFiles.length > 0 && (
+            <div className="flex gap-2 flex-wrap mt-4">
+              {uploadedFiles.map((f, i) => {
+                const Icon = getFileIcon(f.type);
+                return (
+                  <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                    <Icon className="h-3 w-3" /> {f.name}
                     <button onClick={() => removeFile(i)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Main Content */}
-          <div className="space-y-5">
-            {/* Tabs */}
+          {/* Left: Tabs + Content */}
+          <div className="space-y-4">
             <div className="flex gap-1.5 flex-wrap">
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as any)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold transition-all ${
                     activeTab === tab.key
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      ? "bg-primary/15 text-primary border border-primary/30"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary border border-transparent"
                   }`}
                 >
                   <tab.icon className="h-3.5 w-3.5" /> {tab.label}
@@ -136,18 +159,18 @@ const Analytics = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <Sparkles className="h-4 w-4 text-accent" />
                       <span className="text-sm font-bold">AI-Generated Charts</span>
-                      <button onClick={() => setAiCharts([])} className="ml-auto text-xs text-muted-foreground hover:text-destructive">Clear All</button>
+                      <button onClick={() => setAiCharts([])} className="ml-auto text-xs text-muted-foreground hover:text-destructive font-medium">Clear All</button>
                     </div>
                     {aiCharts.map((chart, i) => (
                       <DynamicChart key={i} chart={chart} />
                     ))}
                   </>
                 ) : (
-                  <div className="glass-card p-10 text-center">
-                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                    <h3 className="font-bold mb-2 text-lg">No Charts Yet</h3>
+                  <div className="glass-card p-12 text-center">
+                    <BarChart3 className="h-14 w-14 text-muted-foreground mx-auto mb-5 opacity-40" />
+                    <h3 className="font-black mb-3 text-lg">No Charts Yet</h3>
                     <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                      Upload a data file and ask the AI to <strong className="text-foreground">"Generate charts from data"</strong> or <strong className="text-foreground">"Show revenue breakdown"</strong>. Charts will appear here automatically.
+                      Upload a data file and ask the AI to <strong className="text-foreground">"Generate charts from data"</strong> — charts will appear here automatically.
                     </p>
                   </div>
                 )}
@@ -155,85 +178,86 @@ const Analytics = () => {
             )}
 
             {activeTab === "story" && (
-              <div className="glass-card p-6">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="glass-card p-6 min-h-[400px]">
+                <div className="flex items-center gap-2 mb-5">
                   <Sparkles className="h-4 w-4 text-accent" />
                   <h3 className="text-sm font-bold">AI Data Story</h3>
                 </div>
                 {aiStory ? (
-                  <div className="prose prose-sm prose-invert max-w-none text-sm leading-relaxed">
-                    <div dangerouslySetInnerHTML={{ __html: aiStory.replace(/\n/g, '<br/>') }} />
+                  <div className="prose prose-sm prose-invert max-w-none text-sm leading-relaxed [&_p]:mb-3 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_li]:text-sm [&_strong]:text-foreground">
+                    <ReactMarkdown>{aiStory}</ReactMarkdown>
                   </div>
                 ) : uploadedFiles.length > 0 ? (
-                  <div className="text-center py-6">
-                    <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Ask the AI: <strong className="text-foreground">"Create a data story"</strong> or <strong className="text-foreground">"Generate executive summary"</strong> to get a narrative analysis of your uploaded data.
+                  <div className="text-center py-10">
+                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-40" />
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+                      Ask the AI: <strong className="text-foreground">"Create a data story"</strong> or <strong className="text-foreground">"Generate executive summary"</strong> — the narrative will appear here.
                     </p>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-6">
-                    Upload data files first, then ask the AI to generate a data story.
-                  </p>
+                  <div className="text-center py-10">
+                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-40" />
+                    <p className="text-sm text-muted-foreground">Upload data files first, then ask the AI to generate a data story.</p>
+                  </div>
                 )}
               </div>
             )}
 
             {activeTab === "table" && (
-              <div className="glass-card p-5 overflow-x-auto">
-                <h3 className="text-sm font-bold mb-4">Data Table</h3>
+              <div className="glass-card p-5 overflow-x-auto min-h-[400px]">
+                <h3 className="text-sm font-bold mb-5">Data Table</h3>
                 {tableData ? (
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border">
                         {tableData.headers.map((h: string) => (
-                          <th key={h} className="text-left py-2 text-muted-foreground font-semibold px-2 text-xs uppercase tracking-wider">{h}</th>
+                          <th key={h} className="text-left py-3 text-muted-foreground font-bold px-3 text-[11px] uppercase tracking-wider">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {tableData.rows.slice(0, 50).map((row: Record<string, string>, i: number) => (
-                        <tr key={i} className="border-b border-border/50 hover:bg-secondary/50">
+                        <tr key={i} className="border-b border-border/30 hover:bg-secondary/50 transition-colors">
                           {tableData.headers.map((h: string) => (
-                            <td key={h} className="py-2 px-2 text-sm">{row[h]}</td>
+                            <td key={h} className="py-2.5 px-3 text-sm">{row[h]}</td>
                           ))}
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 ) : (
-                  <div className="text-center py-8">
-                    <Table className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                    <p className="text-sm text-muted-foreground">Upload a CSV file to see your data in table format.</p>
+                  <div className="text-center py-10">
+                    <Table className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-40" />
+                    <p className="text-sm text-muted-foreground">Upload a CSV or JSON file to see your data in table format.</p>
                   </div>
                 )}
               </div>
             )}
 
             {activeTab === "forecast" && (
-              <div className="glass-card p-6">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="glass-card p-6 min-h-[400px]">
+                <div className="flex items-center gap-2 mb-5">
                   <TrendingUp className="h-4 w-4 text-primary" />
                   <h3 className="text-sm font-bold">Predictive Forecast</h3>
                 </div>
-                <div className="text-center py-6">
-                  <TrendingUp className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+                <div className="text-center py-10">
+                  <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-40" />
                   <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
-                    Upload data and ask the AI: <strong className="text-foreground">"Create a forecast"</strong> or <strong className="text-foreground">"Predict next quarter revenue"</strong>. The AI will generate forecast charts with confidence scoring.
+                    Upload data and ask: <strong className="text-foreground">"Create a forecast"</strong> or <strong className="text-foreground">"Predict next quarter revenue"</strong> — AI generates forecast charts with confidence scoring.
                   </p>
                 </div>
               </div>
             )}
 
             {activeTab === "simulation" && (
-              <div className="glass-card p-6">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="glass-card p-6 min-h-[400px]">
+                <div className="flex items-center gap-2 mb-5">
                   <Shuffle className="h-4 w-4 text-accent" />
                   <h3 className="text-sm font-bold">Scenario Simulation</h3>
                 </div>
-                <div className="text-center py-6">
-                  <Shuffle className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto mb-4">
+                <div className="text-center py-10">
+                  <Shuffle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-40" />
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto mb-5">
                     Ask "What if" questions to simulate strategic scenarios with projected outcomes and risk analysis.
                   </p>
                   <div className="flex flex-wrap gap-2 justify-center">
@@ -242,7 +266,7 @@ const Analytics = () => {
                       "What if marketing spend drops 20%?",
                       "What if we hire 50 more employees?",
                     ].map(q => (
-                      <span key={q} className="text-xs px-3 py-1.5 rounded-full border border-accent/30 text-accent font-medium">{q}</span>
+                      <span key={q} className="text-xs px-4 py-2 rounded-full border border-accent/30 text-accent font-semibold">{q}</span>
                     ))}
                   </div>
                 </div>
@@ -250,14 +274,14 @@ const Analytics = () => {
             )}
 
             {activeTab === "cofound" && (
-              <div className="glass-card p-6">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="glass-card p-6 min-h-[400px]">
+                <div className="flex items-center gap-2 mb-5">
                   <Brain className="h-4 w-4 text-primary" />
                   <h3 className="text-sm font-bold">AI Strategic Co-Founder</h3>
                 </div>
-                <div className="text-center py-6">
-                  <Brain className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto mb-4">
+                <div className="text-center py-10">
+                  <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-40" />
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto mb-5">
                     Your AI strategic partner. Ask for growth strategies, profit leak analysis, cost optimization, and competitive threat detection.
                   </p>
                   <div className="flex flex-wrap gap-2 justify-center">
@@ -265,9 +289,8 @@ const Analytics = () => {
                       "Suggest growth strategies",
                       "Find profit leaks",
                       "Recommend cost optimization",
-                      "Detect competitive threats",
                     ].map(q => (
-                      <span key={q} className="text-xs px-3 py-1.5 rounded-full border border-primary/30 text-primary font-medium">{q}</span>
+                      <span key={q} className="text-xs px-4 py-2 rounded-full border border-primary/30 text-primary font-semibold">{q}</span>
                     ))}
                   </div>
                 </div>
@@ -275,9 +298,13 @@ const Analytics = () => {
             )}
           </div>
 
-          {/* AI Assistant — full half */}
+          {/* Right: AI Chat */}
           <div>
-            <AIChatPanel fileData={fileData} onChartsGenerated={handleChartsGenerated} onStoryGenerated={handleStoryGenerated} />
+            <AIChatPanel
+              fileData={fileData}
+              onChartsGenerated={handleChartsGenerated}
+              onStoryGenerated={handleStoryGenerated}
+            />
           </div>
         </div>
       </div>

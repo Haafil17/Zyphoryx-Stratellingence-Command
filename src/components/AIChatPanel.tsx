@@ -35,6 +35,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastSentRef = useRef<string>("");
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -45,6 +46,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
   const handleSend = async (customInput?: string) => {
     const msg = customInput || input.trim();
     if (!msg || isLoading) return;
+    lastSentRef.current = msg;
     const userMsg: ChatMessage = { role: "user", content: msg };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
@@ -72,9 +74,9 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
         if (charts.length > 0 && onChartsGenerated) {
           onChartsGenerated(charts);
         }
-        // If it looks like a story/summary, send to story panel
-        const lowerInput = msg.toLowerCase();
-        if ((lowerInput.includes("story") || lowerInput.includes("summary") || lowerInput.includes("narrative") || lowerInput.includes("executive")) && onStoryGenerated) {
+        // Auto-populate story panel for story/summary/narrative requests
+        const lowerInput = lastSentRef.current.toLowerCase();
+        if ((lowerInput.includes("story") || lowerInput.includes("summary") || lowerInput.includes("narrative") || lowerInput.includes("executive") || lowerInput.includes("summarize")) && onStoryGenerated) {
           onStoryGenerated(text);
         }
       },
@@ -89,7 +91,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
     const { text, charts } = parseChartBlocks(content);
     return (
       <>
-        <div className="prose prose-sm prose-invert max-w-none [&_p]:mb-2 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_li]:text-sm">
+        <div className="prose prose-sm prose-invert max-w-none [&_p]:mb-2 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_li]:text-sm [&_strong]:text-foreground">
           <ReactMarkdown>{text}</ReactMarkdown>
         </div>
         {charts.map((chart, i) => (
@@ -103,9 +105,9 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
     <div className="glass-card h-[750px] flex flex-col">
       <div className="p-4 border-b border-border/50 flex items-center gap-2">
         <Brain className="h-5 w-5 text-primary" />
-        <h3 className="font-bold text-sm">AI Analytics Assistant</h3>
+        <h3 className="font-black text-sm">AI Analytics Assistant</h3>
         {fileData && (
-          <span className="ml-auto text-xs text-primary/70 flex items-center gap-1 font-medium">
+          <span className="ml-auto text-xs text-primary/70 flex items-center gap-1 font-semibold">
             <Sparkles className="h-3 w-3" /> Data loaded
           </span>
         )}
@@ -116,7 +118,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
             <div
               className={`max-w-[90%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === "user"
-                  ? "gradient-primary text-primary-foreground font-medium"
+                  ? "gradient-primary text-primary-foreground font-semibold"
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
@@ -157,12 +159,12 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
             <Send className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex gap-1.5 mt-2 flex-wrap">
+        <div className="flex gap-1.5 mt-3 flex-wrap">
           {quickQuestions.map((q) => (
             <button
               key={q}
               onClick={() => handleSend(q)}
-              className="text-[11px] px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors font-medium"
+              className="text-[11px] px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors font-semibold"
               disabled={isLoading}
             >
               {q}
