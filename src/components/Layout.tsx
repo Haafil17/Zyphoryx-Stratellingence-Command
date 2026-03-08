@@ -79,6 +79,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   className={`px-3 py-2.5 text-sm font-bold rounded-md ${
                     location.pathname === link.to
                       ? "text-primary bg-primary/10"
+                      : link.highlight
+                      ? "text-primary"
                       : "text-muted-foreground"
                   }`}
                 >

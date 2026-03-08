@@ -115,10 +115,10 @@ const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData,
     });
   };
 
-  // Expose sendMessage to parent via ref
+  // Expose sendMessage to parent via ref — include deps to avoid stale closure
   useImperativeHandle(ref, () => ({
     sendMessage: (msg: string) => handleSend(msg),
-  }));
+  }), [fileData, messages, isLoading]);
 
   const renderMessage = (content: string) => {
     const { text, charts } = parseChartBlocks(content);
