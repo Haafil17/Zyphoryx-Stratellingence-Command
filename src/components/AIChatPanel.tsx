@@ -11,6 +11,9 @@ interface AIChatPanelProps {
   fileData: string;
   onChartsGenerated?: (charts: ChartData[]) => void;
   onStoryGenerated?: (story: string) => void;
+  onForecastGenerated?: (text: string) => void;
+  onSimulationGenerated?: (text: string) => void;
+  onCofounderGenerated?: (text: string) => void;
 }
 
 const quickQuestions = [
@@ -24,7 +27,7 @@ const quickQuestions = [
   "Suggest growth strategies",
 ];
 
-const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPanelProps) => {
+const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated, onForecastGenerated, onSimulationGenerated, onCofounderGenerated }: AIChatPanelProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -42,6 +45,21 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const routeResponse = (text: string, userInput: string) => {
+    const lower = userInput.toLowerCase();
+
+    // Route to appropriate tab based on user query
+    if ((lower.includes("story") || lower.includes("summary") || lower.includes("narrative") || lower.includes("executive") || lower.includes("summarize")) && onStoryGenerated) {
+      onStoryGenerated(text);
+    } else if ((lower.includes("forecast") || lower.includes("predict") || lower.includes("projection") || lower.includes("future")) && onForecastGenerated) {
+      onForecastGenerated(text);
+    } else if ((lower.includes("what if") || lower.includes("scenario") || lower.includes("simulation") || lower.includes("simulate")) && onSimulationGenerated) {
+      onSimulationGenerated(text);
+    } else if ((lower.includes("strategy") || lower.includes("growth") || lower.includes("profit leak") || lower.includes("optimize") || lower.includes("co-founder") || lower.includes("cofounder") || lower.includes("advisor")) && onCofounderGenerated) {
+      onCofounderGenerated(text);
+    }
+  };
 
   const handleSend = async (customInput?: string) => {
     const msg = customInput || input.trim();
@@ -74,11 +92,8 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
         if (charts.length > 0 && onChartsGenerated) {
           onChartsGenerated(charts);
         }
-        // Auto-populate story panel for story/summary/narrative requests
-        const lowerInput = lastSentRef.current.toLowerCase();
-        if ((lowerInput.includes("story") || lowerInput.includes("summary") || lowerInput.includes("narrative") || lowerInput.includes("executive") || lowerInput.includes("summarize")) && onStoryGenerated) {
-          onStoryGenerated(text);
-        }
+        // Route the response text to the appropriate panel
+        routeResponse(text, lastSentRef.current);
       },
       onError: (error) => {
         toast.error(error);
@@ -91,7 +106,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
     const { text, charts } = parseChartBlocks(content);
     return (
       <>
-        <div className="prose prose-sm prose-invert max-w-none [&_p]:mb-2 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_li]:text-sm [&_strong]:text-foreground">
+        <div className="prose prose-sm prose-invert max-w-none [&_p]:mb-2 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-bold [&_li]:text-sm [&_strong]:text-foreground">
           <ReactMarkdown>{text}</ReactMarkdown>
         </div>
         {charts.map((chart, i) => (
@@ -102,23 +117,23 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
   };
 
   return (
-    <div className="glass-card h-[750px] flex flex-col">
-      <div className="p-4 border-b border-border/50 flex items-center gap-2">
+    <div className="glass-card h-[780px] flex flex-col">
+      <div className="p-5 border-b border-border/50 flex items-center gap-2">
         <Brain className="h-5 w-5 text-primary" />
-        <h3 className="font-black text-sm">AI Analytics Assistant</h3>
+        <h3 className="font-extrabold text-sm">AI Analytics Assistant</h3>
         {fileData && (
-          <span className="ml-auto text-xs text-primary/70 flex items-center gap-1 font-semibold">
+          <span className="ml-auto text-xs text-primary/70 flex items-center gap-1 font-bold">
             <Sparkles className="h-3 w-3" /> Data loaded
           </span>
         )}
       </div>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
               className={`max-w-[90%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === "user"
-                  ? "gradient-primary text-primary-foreground font-semibold"
+                  ? "gradient-primary text-primary-foreground font-bold"
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
@@ -134,7 +149,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
           </div>
         )}
       </div>
-      <div className="p-4 border-t border-border/50">
+      <div className="p-5 border-t border-border/50">
         <div className="flex gap-2">
           <Textarea
             value={input}
@@ -164,7 +179,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated }: AIChatPa
             <button
               key={q}
               onClick={() => handleSend(q)}
-              className="text-[11px] px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors font-semibold"
+              className="text-[11px] px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors font-bold"
               disabled={isLoading}
             >
               {q}
