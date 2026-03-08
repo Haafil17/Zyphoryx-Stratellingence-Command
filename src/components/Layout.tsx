@@ -94,7 +94,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <footer className="border-t border-border/50 py-16 mt-20">
         <div className="container text-center">
           <div className="flex items-center justify-center gap-2.5 mb-4">
-            <Brain className="h-6 w-6 text-primary" />
+            <img src={logo} alt="Zephoryx AI Lab" className="h-6 w-6 rounded-md object-cover" />
             <span className="font-black text-lg gradient-text">Zephoryx AI</span>
           </div>
           <p className="text-sm text-muted-foreground font-bold">
