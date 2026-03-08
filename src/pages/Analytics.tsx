@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,9 +25,27 @@ const Analytics = () => {
   const [aiForecast, setAiForecast] = useState<string>("");
   const [aiSimulation, setAiSimulation] = useState<string>("");
   const [aiCofounder, setAiCofounder] = useState<string>("");
+  const [autoAnalyzeTriggered, setAutoAnalyzeTriggered] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const chatRef = useRef<{ sendMessage: (msg: string) => void } | null>(null);
 
   const fileData = uploadedFiles.map(f => `--- FILE: ${f.name} ---\n${f.content}`).join("\n\n");
+
+  // Auto-trigger analysis when files are uploaded
+  useEffect(() => {
+    if (uploadedFiles.length > 0 && !autoAnalyzeTriggered) {
+      setAutoAnalyzeTriggered(true);
+      // Small delay to ensure chat panel is ready
+      setTimeout(() => {
+        if (chatRef.current) {
+          chatRef.current.sendMessage("Analyze this data comprehensively: generate charts, create a data story, and identify key trends and insights.");
+        }
+      }, 500);
+    }
+    if (uploadedFiles.length === 0) {
+      setAutoAnalyzeTriggered(false);
+    }
+  }, [uploadedFiles.length, autoAnalyzeTriggered]);
 
   const getTableData = () => {
     for (const f of uploadedFiles) {
@@ -64,8 +82,9 @@ const Analytics = () => {
       }
     }
 
+    setAutoAnalyzeTriggered(false); // Reset so auto-analyze triggers again
     setUploadedFiles((prev) => [...prev, ...parsed]);
-    toast.success(`${parsed.length} file(s) loaded — ask AI to analyze!`);
+    toast.success(`${parsed.length} file(s) loaded — AI is analyzing automatically!`);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -73,30 +92,30 @@ const Analytics = () => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleChartsGenerated = (charts: ChartData[]) => {
+  const handleChartsGenerated = useCallback((charts: ChartData[]) => {
     setAiCharts(prev => [...prev, ...charts]);
     setActiveTab("charts");
-  };
+  }, []);
 
-  const handleStoryGenerated = (story: string) => {
+  const handleStoryGenerated = useCallback((story: string) => {
     setAiStory(story);
     setActiveTab("story");
-  };
+  }, []);
 
-  const handleForecastGenerated = (text: string) => {
+  const handleForecastGenerated = useCallback((text: string) => {
     setAiForecast(text);
     setActiveTab("forecast");
-  };
+  }, []);
 
-  const handleSimulationGenerated = (text: string) => {
+  const handleSimulationGenerated = useCallback((text: string) => {
     setAiSimulation(text);
     setActiveTab("simulation");
-  };
+  }, []);
 
-  const handleCofounderGenerated = (text: string) => {
+  const handleCofounderGenerated = useCallback((text: string) => {
     setAiCofounder(text);
     setActiveTab("cofound");
-  };
+  }, []);
 
   const getFileIcon = (type: string) => {
     if (["jpeg", "jpg", "png", "gif", "webp", "svg"].includes(type)) return FileImage;
@@ -116,7 +135,7 @@ const Analytics = () => {
   const renderMarkdownContent = (content: string, emptyIcon: typeof BookOpen, emptyTitle: string, emptyDesc: string) => {
     if (content) {
       return (
-        <div className="prose prose-sm prose-invert max-w-none text-sm leading-relaxed [&_p]:mb-3 [&_h1]:text-xl [&_h1]:font-black [&_h2]:text-lg [&_h2]:font-bold [&_h3]:text-base [&_h3]:font-bold [&_li]:text-sm [&_strong]:text-foreground [&_table]:w-full [&_th]:text-left [&_th]:py-2 [&_th]:px-3 [&_th]:border-b [&_th]:border-border [&_th]:text-xs [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground [&_td]:py-2 [&_td]:px-3 [&_td]:border-b [&_td]:border-border/30">
+        <div className="prose prose-sm prose-invert max-w-none text-sm leading-relaxed [&_p]:mb-3 [&_p]:text-foreground [&_h1]:text-xl [&_h1]:font-black [&_h1]:text-foreground [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-foreground [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-foreground [&_li]:text-sm [&_li]:text-foreground [&_strong]:text-foreground [&_table]:w-full [&_th]:text-left [&_th]:py-2 [&_th]:px-3 [&_th]:border-b [&_th]:border-border [&_th]:text-xs [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground [&_td]:py-2 [&_td]:px-3 [&_td]:border-b [&_td]:border-border/30 [&_td]:text-foreground">
           <ReactMarkdown>{content}</ReactMarkdown>
         </div>
       );
@@ -126,7 +145,7 @@ const Analytics = () => {
     return (
       <div className="text-center py-12">
         <EmptyIcon className="h-14 w-14 text-muted-foreground mx-auto mb-5 opacity-30" />
-        <h3 className="font-extrabold mb-3 text-lg">{emptyTitle}</h3>
+        <h3 className="font-extrabold mb-3 text-lg text-foreground">{emptyTitle}</h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">{emptyDesc}</p>
       </div>
     );
@@ -136,12 +155,12 @@ const Analytics = () => {
     <div className="neural-bg min-h-screen">
       <div className="container py-10 max-w-7xl">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-black flex items-center gap-3 tracking-tight leading-tight">
+          <h1 className="text-4xl md:text-5xl font-black flex items-center gap-3 tracking-tight leading-tight text-foreground">
             <BarChart3 className="h-9 w-9 text-primary" />
             Data Analytics & <span className="gradient-text">AI Intelligence</span>
           </h1>
           <p className="text-base text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-            Upload your data → AI analyzes patterns → generates interactive charts, executive stories, forecasts, and strategic simulations.
+            Upload your data and AI will <strong className="text-foreground">automatically analyze</strong> it — generating charts, stories, forecasts, and strategic insights instantly.
           </p>
         </motion.div>
 
@@ -197,7 +216,7 @@ const Analytics = () => {
                   <>
                     <div className="flex items-center gap-2 mb-2">
                       <Sparkles className="h-4 w-4 text-accent" />
-                      <span className="text-sm font-extrabold">AI-Generated Charts</span>
+                      <span className="text-sm font-extrabold text-foreground">AI-Generated Charts</span>
                       <button onClick={() => setAiCharts([])} className="ml-auto text-xs text-muted-foreground hover:text-destructive font-bold">Clear All</button>
                     </div>
                     {aiCharts.map((chart, i) => (
@@ -207,9 +226,9 @@ const Analytics = () => {
                 ) : (
                   <div className="glass-card p-14 text-center">
                     <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-6 opacity-30" />
-                    <h3 className="font-extrabold mb-3 text-xl">No Charts Yet</h3>
+                    <h3 className="font-extrabold mb-3 text-xl text-foreground">No Charts Yet</h3>
                     <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                      Upload a data file and ask the AI to <strong className="text-foreground">"Generate charts from data"</strong> — charts will appear here automatically.
+                      Upload a data file and charts will be <strong className="text-foreground">generated automatically</strong> by the AI assistant.
                     </p>
                   </div>
                 )}
@@ -220,7 +239,7 @@ const Analytics = () => {
               <div className="glass-card p-7 min-h-[450px]">
                 <div className="flex items-center gap-2 mb-6">
                   <Sparkles className="h-4 w-4 text-accent" />
-                  <h3 className="text-sm font-extrabold">AI Data Story</h3>
+                  <h3 className="text-sm font-extrabold text-foreground">AI Data Story</h3>
                 </div>
                 {renderMarkdownContent(
                   aiStory,
@@ -235,7 +254,7 @@ const Analytics = () => {
 
             {activeTab === "table" && (
               <div className="glass-card p-6 overflow-x-auto min-h-[450px]">
-                <h3 className="text-sm font-extrabold mb-6">Data Table</h3>
+                <h3 className="text-sm font-extrabold mb-6 text-foreground">Data Table</h3>
                 {tableData ? (
                   <table className="w-full text-sm">
                     <thead>
@@ -249,7 +268,7 @@ const Analytics = () => {
                       {tableData.rows.slice(0, 50).map((row: Record<string, string>, i: number) => (
                         <tr key={i} className="border-b border-border/30 hover:bg-secondary/50 transition-colors">
                           {tableData.headers.map((h: string) => (
-                            <td key={h} className="py-2.5 px-3 text-sm">{row[h]}</td>
+                            <td key={h} className="py-2.5 px-3 text-sm text-foreground">{row[h]}</td>
                           ))}
                         </tr>
                       ))}
@@ -268,7 +287,7 @@ const Analytics = () => {
               <div className="glass-card p-7 min-h-[450px]">
                 <div className="flex items-center gap-2 mb-6">
                   <TrendingUp className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-extrabold">Predictive Forecast</h3>
+                  <h3 className="text-sm font-extrabold text-foreground">Predictive Forecast</h3>
                 </div>
                 {renderMarkdownContent(
                   aiForecast,
@@ -283,7 +302,7 @@ const Analytics = () => {
               <div className="glass-card p-7 min-h-[450px]">
                 <div className="flex items-center gap-2 mb-6">
                   <Shuffle className="h-4 w-4 text-accent" />
-                  <h3 className="text-sm font-extrabold">Scenario Simulation</h3>
+                  <h3 className="text-sm font-extrabold text-foreground">Scenario Simulation</h3>
                 </div>
                 {renderMarkdownContent(
                   aiSimulation,
@@ -305,7 +324,7 @@ const Analytics = () => {
               <div className="glass-card p-7 min-h-[450px]">
                 <div className="flex items-center gap-2 mb-6">
                   <Brain className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-extrabold">AI Strategic Co-Founder</h3>
+                  <h3 className="text-sm font-extrabold text-foreground">AI Strategic Co-Founder</h3>
                 </div>
                 {renderMarkdownContent(
                   aiCofounder,
@@ -327,6 +346,7 @@ const Analytics = () => {
           {/* Right: AI Chat */}
           <div>
             <AIChatPanel
+              ref={chatRef}
               fileData={fileData}
               onChartsGenerated={handleChartsGenerated}
               onStoryGenerated={handleStoryGenerated}
