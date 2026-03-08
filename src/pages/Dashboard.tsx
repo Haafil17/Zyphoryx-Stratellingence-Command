@@ -53,11 +53,14 @@ const Dashboard = () => {
         const monthIdx = parsed.headers.findIndex((h: string) => h.toLowerCase() === monthCol);
         const valueIdx = parsed.headers.findIndex((h: string) => h.toLowerCase() === valueCol);
         if (monthIdx >= 0 && valueIdx >= 0) {
-          const chartData = parsed.rows.slice(0, 24).map((row: Record<string, string>) => ({
-            month: row[parsed.headers[monthIdx]] || "",
-            revenue: parseFloat(String(row[parsed.headers[valueIdx]]).replace(/[,$]/g, "")) || 0,
-            forecast: (parseFloat(String(row[parsed.headers[valueIdx]]).replace(/[,$]/g, "")) || 0) * (0.95 + Math.random() * 0.1),
-          }));
+          const chartData = parsed.rows.slice(0, 24).map((row: Record<string, string>) => {
+            const rev = parseFloat(String(row[parsed.headers[valueIdx]]).replace(/[,$]/g, "")) || 0;
+            return {
+              month: row[parsed.headers[monthIdx]] || "",
+              revenue: rev,
+              forecast: rev,
+            };
+          });
           if (chartData.length > 0) {
             setParsedChartData(prev => ({ ...prev, revenueData: chartData }));
           }
