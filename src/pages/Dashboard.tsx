@@ -151,8 +151,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, category: "revenue" | "expense" | "other") => {
-    const files = Array.from(e.target.files || []);
+  const processFilesForCategory = async (files: File[], category: "revenue" | "expense" | "other") => {
     if (!files.length) return;
     setUploading(true);
 
