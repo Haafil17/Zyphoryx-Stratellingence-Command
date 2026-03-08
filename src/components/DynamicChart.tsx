@@ -91,26 +91,19 @@ const DynamicChart = ({ chart }: { chart: ChartData }) => {
             <Tooltip contentStyle={tooltipStyle} />
           </RadialBarChart>
         );
-      case "treemap":
+      case "treemap": {
+        const treemapData = data.map((d, i) => ({ ...d, fill: COLORS[i % COLORS.length] }));
         return (
           <Treemap
-            data={data}
+            data={treemapData}
             dataKey="value"
             nameKey="name"
             stroke="hsl(var(--background))"
-            fill={COLORS[0]}
-            content={({ x, y, width, height, name, value }: any) => (
-              <g>
-                <rect x={x} y={y} width={width} height={height} fill={COLORS[data.findIndex(d => d.name === name) % COLORS.length]} rx={4} opacity={0.85} />
-                {width > 50 && height > 30 && (
-                  <>
-                    <text x={x + 6} y={y + 16} fill="white" fontSize={11} fontWeight={600}>{name}</text>
-                    <text x={x + 6} y={y + 30} fill="white" fontSize={10} opacity={0.8}>{value}</text>
-                  </>
-                )}
-              </g>
-            )}
-          />
+          >
+            <Tooltip contentStyle={tooltipStyle} />
+          </Treemap>
+        );
+      }
         );
       case "funnel":
         // Render funnel as horizontal bars sorted by value descending
