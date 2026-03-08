@@ -1,6 +1,9 @@
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  RadialBarChart, RadialBar, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  Treemap,
 } from "recharts";
 
 const COLORS = [
@@ -9,7 +12,7 @@ const COLORS = [
 ];
 
 export interface ChartData {
-  type: "bar" | "line" | "area" | "pie";
+  type: "bar" | "line" | "area" | "pie" | "radar" | "radialBar" | "treemap" | "funnel";
   title: string;
   data: { label: string; value: number }[];
 }
@@ -30,52 +33,119 @@ export function parseChartBlocks(markdown: string): { text: string; charts: Char
 }
 
 const tooltipStyle = {
-  background: "hsl(222,22%,9%)",
-  border: "1px solid hsl(222,15%,18%)",
+  background: "hsl(var(--card))",
+  border: "1px solid hsl(var(--border))",
   borderRadius: 8,
+  color: "hsl(var(--foreground))",
 };
 
 const DynamicChart = ({ chart }: { chart: ChartData }) => {
-  const data = chart.data.map((d) => ({ name: d.label, value: d.value }));
+  const data = chart.data.map((d, i) => ({ name: d.label, value: d.value, fill: COLORS[i % COLORS.length] }));
 
-  return (
-    <div className="glass-card p-4 my-3">
-      <h4 className="text-xs font-semibold mb-3 text-foreground">{chart.title}</h4>
-      <ResponsiveContainer width="100%" height={200}>
-        {chart.type === "pie" ? (
+  const renderChart = () => {
+    switch (chart.type) {
+      case "pie":
+        return (
           <PieChart>
             <Pie data={data} cx="50%" cy="50%" innerRadius={35} outerRadius={70} dataKey="value" paddingAngle={3}>
               {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
             </Pie>
             <Tooltip contentStyle={tooltipStyle} />
           </PieChart>
-        ) : chart.type === "area" ? (
+        );
+      case "area":
+        return (
           <AreaChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,15%,18%)" />
-            <XAxis dataKey="name" stroke="hsl(215,15%,55%)" fontSize={11} />
-            <YAxis stroke="hsl(215,15%,55%)" fontSize={11} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
             <Tooltip contentStyle={tooltipStyle} />
             <Area type="monotone" dataKey="value" stroke={COLORS[0]} fill={COLORS[0]} fillOpacity={0.2} strokeWidth={2} />
           </AreaChart>
-        ) : chart.type === "line" ? (
+        );
+      case "line":
+        return (
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,15%,18%)" />
-            <XAxis dataKey="name" stroke="hsl(215,15%,55%)" fontSize={11} />
-            <YAxis stroke="hsl(215,15%,55%)" fontSize={11} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
             <Tooltip contentStyle={tooltipStyle} />
             <Line type="monotone" dataKey="value" stroke={COLORS[0]} strokeWidth={2} dot={{ fill: COLORS[0] }} />
           </LineChart>
-        ) : (
+        );
+      case "radar":
+        return (
+          <RadarChart data={data} cx="50%" cy="50%" outerRadius="70%">
+            <PolarGrid stroke="hsl(var(--border))" />
+            <PolarAngleAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
+            <PolarRadiusAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }} />
+            <Radar dataKey="value" stroke={COLORS[0]} fill={COLORS[0]} fillOpacity={0.3} strokeWidth={2} />
+            <Tooltip contentStyle={tooltipStyle} />
+          </RadarChart>
+        );
+      case "radialBar":
+        return (
+          <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="90%" data={data} startAngle={180} endAngle={0}>
+            <RadialBar dataKey="value" cornerRadius={6} />
+            <Legend iconSize={10} layout="horizontal" verticalAlign="bottom" />
+            <Tooltip contentStyle={tooltipStyle} />
+          </RadialBarChart>
+        );
+      case "treemap":
+        return (
+          <Treemap
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            stroke="hsl(var(--background))"
+            fill={COLORS[0]}
+            content={({ x, y, width, height, name, value }: any) => (
+              <g>
+                <rect x={x} y={y} width={width} height={height} fill={COLORS[data.findIndex(d => d.name === name) % COLORS.length]} rx={4} opacity={0.85} />
+                {width > 50 && height > 30 && (
+                  <>
+                    <text x={x + 6} y={y + 16} fill="white" fontSize={11} fontWeight={600}>{name}</text>
+                    <text x={x + 6} y={y + 30} fill="white" fontSize={10} opacity={0.8}>{value}</text>
+                  </>
+                )}
+              </g>
+            )}
+          />
+        );
+      case "funnel":
+        // Render funnel as horizontal bars sorted by value descending
+        const sorted = [...data].sort((a, b) => b.value - a.value);
+        return (
+          <BarChart data={sorted} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+            <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" fontSize={11} width={80} />
+            <Tooltip contentStyle={tooltipStyle} />
+            <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+              {sorted.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+            </Bar>
+          </BarChart>
+        );
+      default: // bar
+        return (
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,15%,18%)" />
-            <XAxis dataKey="name" stroke="hsl(215,15%,55%)" fontSize={11} />
-            <YAxis stroke="hsl(215,15%,55%)" fontSize={11} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
             <Tooltip contentStyle={tooltipStyle} />
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
               {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
             </Bar>
           </BarChart>
-        )}
+        );
+    }
+  };
+
+  return (
+    <div className="glass-card p-5 my-3">
+      <h4 className="text-xs font-semibold mb-3 text-foreground tracking-tight">{chart.title}</h4>
+      <ResponsiveContainer width="100%" height={220}>
+        {renderChart()}
       </ResponsiveContainer>
     </div>
   );
