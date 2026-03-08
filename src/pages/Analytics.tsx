@@ -102,6 +102,13 @@ const Analytics = () => {
     if (fileRef.current) fileRef.current.value = "";
   };
 
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await processFiles(files);
+  };
+
+  const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useFileDrop(processFiles);
+
   const removeFile = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
