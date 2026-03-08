@@ -1,9 +1,11 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ThemeToggle";
 import logo from "@/assets/logo.png";
+import { supabase } from "@/integrations/supabase/client";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -17,7 +19,24 @@ const navLinks = [
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -49,7 +68,19 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {user ? (
+              <Button size="sm" variant="ghost" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground font-bold text-xs">
+                <LogOut className="h-4 w-4 mr-1" /> Sign Out
+              </Button>
+            ) : (
+              <Link to="/login">
+                <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground font-bold text-xs hidden sm:inline-flex">
+                  Sign In
+                </Button>
+              </Link>
+            )}
             <Link to="/contact">
               <Button size="sm" className="hidden sm:inline-flex gradient-primary text-primary-foreground font-extrabold border-0">
                 Request Demo
@@ -87,6 +118,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   {link.label}
                 </Link>
               ))}
+              {user && (
+                <button onClick={handleSignOut} className="px-3 py-2.5 text-sm font-bold text-muted-foreground text-left">
+                  Sign Out
+                </button>
+              )}
             </nav>
           </motion.div>
         )}
@@ -104,7 +140,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             Strategic Intelligence & Decision Ecosystem
           </p>
           <p className="text-xs text-muted-foreground mt-3">
-            © {new Date().getFullYear()} Zephoryx AI. All rights reserved.
+            © {new Date().getFullYear()} Zephoryx AI Lab. All rights reserved.
           </p>
         </div>
       </footer>
