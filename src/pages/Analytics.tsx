@@ -63,8 +63,7 @@ const Analytics = () => {
 
   const tableData = getTableData();
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+  const processFiles = async (files: File[]) => {
     if (!files.length) return;
 
     const parsed: { name: string; content: string; type: string }[] = [];
