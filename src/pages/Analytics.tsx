@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Upload, FileText, BarChart3, TrendingUp,
   Sparkles, Table, BookOpen, X, Brain, Shuffle,
-  FileImage, FileSpreadsheet, Image
+  FileImage, FileSpreadsheet, Image, Download
 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -13,6 +13,7 @@ import DynamicChart, { ChartData } from "@/components/DynamicChart";
 import { parseFileContent, parseExcel } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
 import { useFileDrop } from "@/hooks/use-file-drop";
+import ExportButtons from "@/components/ExportButtons";
 
 const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
 
