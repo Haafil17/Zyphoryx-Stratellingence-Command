@@ -177,13 +177,24 @@ const Analytics = () => {
     <div className="neural-bg min-h-screen">
       <div className="container py-10 max-w-7xl">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-black flex items-center gap-3 tracking-tight leading-tight text-foreground">
-            <BarChart3 className="h-9 w-9 text-primary" />
-            Data Analytics & <span className="gradient-text">AI Intelligence</span>
-          </h1>
-          <p className="text-base text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-            Upload your data and AI will <strong className="text-foreground">automatically analyze</strong> it — generating charts, stories, forecasts, and strategic insights instantly.
-          </p>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black flex items-center gap-3 tracking-tight leading-tight text-foreground">
+                <BarChart3 className="h-9 w-9 text-primary" />
+                Data Analytics & <span className="gradient-text">AI Intelligence</span>
+              </h1>
+              <p className="text-base text-muted-foreground mt-3 max-w-2xl leading-relaxed">
+                Upload your data and our AI will <strong className="text-foreground">automatically analyze</strong> it — generating interactive charts, data stories, predictive forecasts, and strategic recommendations in real time.
+              </p>
+            </div>
+            {tableData && (
+              <ExportButtons
+                data={tableData.rows}
+                headers={tableData.headers}
+                filename="analytics-data"
+              />
+            )}
+          </div>
         </motion.div>
 
         {/* Upload Zone */}

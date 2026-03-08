@@ -11,42 +11,42 @@ const features = [
   {
     icon: Sparkles,
     title: "AI-Powered Data Intelligence",
-    desc: "Upload your company data and instantly transform it into powerful insights, visualizations, and strategic reports.",
+    desc: "Upload company data and watch it transform into actionable insights, interactive visualizations, and board-ready strategic reports in seconds.",
   },
   {
     icon: BookOpen,
     title: "Data Storytelling Engine",
-    desc: "Complex datasets are converted into clear stories, charts, and explanations that anyone in your company can understand.",
+    desc: "Turn complex datasets into compelling narratives with auto-generated charts, trend explanations, and executive summaries anyone can understand.",
   },
   {
     icon: TrendingUp,
     title: "Predictive Business Forecasting",
-    desc: "The platform analyzes patterns in your data and predicts future trends, opportunities, and risks.",
+    desc: "Leverage pattern recognition and ML models to forecast revenue, identify emerging risks, and project growth trajectories with confidence scoring.",
   },
   {
     icon: MessageSquare,
     title: "AI Decision Assistant",
-    desc: "Ask questions about your business and get smart recommendations on what actions to take.",
+    desc: "Ask natural-language questions about your business and receive data-backed recommendations with full reasoning transparency.",
   },
   {
     icon: Brain,
     title: "Strategy Co-Founder AI",
-    desc: "The system acts like a virtual business advisor, suggesting improvements, growth strategies, and smarter decisions.",
+    desc: "Your always-on virtual advisor — surfacing growth levers, competitive threats, cost optimization opportunities, and strategic pivots.",
   },
   {
     icon: BarChart3,
-    title: "All-in-One Analytics Platform",
-    desc: "Documents, spreadsheets, datasets, charts, insights, predictions, and recommendations in a single powerful workspace.",
+    title: "Unified Analytics Platform",
+    desc: "Spreadsheets, documents, charts, forecasts, simulations, and recommendations — consolidated into one powerful command center.",
   },
   {
     icon: Users,
-    title: "Built for Companies",
-    desc: "Designed specifically for businesses that want to make faster, smarter, and data-driven decisions.",
+    title: "Enterprise-Ready Architecture",
+    desc: "Purpose-built for organizations that demand speed, accuracy, and data-driven decision-making at every level of leadership.",
   },
   {
     icon: Shuffle,
-    title: "Scenario Simulation",
-    desc: "Run what-if models to test pricing changes, budget cuts, expansion plans, and strategic pivots before committing.",
+    title: "Scenario Simulation Engine",
+    desc: "Model pricing changes, budget reallocations, market expansions, and strategic pivots with projected outcomes before committing resources.",
   },
 ];
 
@@ -72,7 +72,7 @@ const Index = () => {
       {/* Hero */}
       <section className="relative min-h-[92vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBg} alt="" className="w-full h-full object-cover opacity-20" />
+          <img src={heroBg} alt="" className="w-full h-full object-cover opacity-20 dark:opacity-20" />
           <div className="absolute inset-0 neural-bg" />
           <div className="absolute inset-0 grid-pattern opacity-10" />
         </div>
@@ -95,18 +95,18 @@ const Index = () => {
               <span className="text-foreground">Decision Engine</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed font-medium">
-              Transform raw data into strategic power. Predict outcomes, simulate scenarios,
-              and command your business with AI-driven intelligence that thinks like a co-founder.
+              Transform raw business data into strategic firepower. Predict outcomes, simulate scenarios,
+              and lead with AI-driven intelligence that thinks like a seasoned co-founder.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/contact">
                 <Button size="lg" className="gradient-primary text-primary-foreground font-bold border-0 px-10 py-6 text-base">
-                  Request Demo <ArrowRight className="ml-2 h-5 w-5" />
+                  Request a Demo <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/dashboard">
                 <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-secondary px-10 py-6 text-base font-bold">
-                  Enter Platform
+                  Launch Platform
                 </Button>
               </Link>
             </div>
@@ -148,7 +148,7 @@ const Index = () => {
               One Platform. <span className="gradient-text">Total Intelligence.</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed text-lg font-medium">
-              Every tool your enterprise needs to dominate data-driven strategy — all powered by AI that understands your business.
+              Everything your leadership team needs to dominate data-driven strategy — powered by AI that deeply understands your business context.
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -189,9 +189,9 @@ const Index = () => {
           </motion.div>
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
-              { step: "01", title: "Upload Your Data", desc: "Drop in your CSV, JSON, PDF, or Excel files. Revenue reports, expense logs, market data — any format works." },
-              { step: "02", title: "AI Analyzes Everything", desc: "Our AI engine detects patterns, anomalies, and trends. It generates charts, forecasts, and strategic insights automatically." },
-              { step: "03", title: "Make Smarter Decisions", desc: "Get executive summaries, run what-if simulations, and receive actionable recommendations to grow your business." },
+              { step: "01", title: "Upload Your Data", desc: "Drop CSV, JSON, PDF, or Excel files — revenue reports, expense logs, market research, customer data. Any format, any structure." },
+              { step: "02", title: "AI Analyzes Everything", desc: "Our intelligence engine detects patterns, surfaces anomalies, and maps trends. Charts, forecasts, and strategic insights generated automatically." },
+              { step: "03", title: "Make Smarter Decisions", desc: "Receive executive summaries, run what-if simulations, and get actionable recommendations backed by data — not gut feelings." },
             ].map((item, i) => (
               <motion.div
                 key={item.step}
@@ -202,7 +202,7 @@ const Index = () => {
                 className="text-center"
               >
                 <div className="text-5xl font-black gradient-text mb-4">{item.step}</div>
-                <h3 className="text-lg font-bold mb-3">{item.title}</h3>
+                <h3 className="text-lg font-bold mb-3 text-foreground">{item.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
@@ -218,7 +218,7 @@ const Index = () => {
               Ready to <span className="gradient-text">Transform</span> Your Strategy?
             </h2>
             <p className="text-muted-foreground mb-10 max-w-lg mx-auto leading-relaxed text-lg font-medium">
-              Join enterprises already using Zephoryx AI to outthink, outperform, and outlast the competition.
+              Join forward-thinking enterprises already using Zephoryx AI to outthink, outperform, and outlast the competition.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link to="/contact">
@@ -228,7 +228,7 @@ const Index = () => {
               </Link>
               <Link to="/analytics">
                 <Button size="lg" variant="outline" className="border-border font-bold px-12 py-6 text-base">
-                  Try Analytics
+                  Explore Analytics
                 </Button>
               </Link>
             </div>
