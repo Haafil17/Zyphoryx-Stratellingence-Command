@@ -92,7 +92,7 @@ const Dashboard = () => {
       };
 
       const parseNum = (val: unknown): number => {
-        const s = String(val || "0").replace(/[,$%\s]/g, "");
+        const s = String(val || "0").replace(/[₹$€£¥,\s%]/g, "");
         const n = parseFloat(s);
         return isNaN(n) ? 0 : n;
       };
