@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Menu, X, Brain } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo.png";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -24,7 +25,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <Brain className="h-7 w-7 text-primary" />
+            <img src={logo} alt="Zephoryx AI Lab" className="h-8 w-8 rounded-md object-cover" />
             <span className="text-lg font-black tracking-tight">
               <span className="gradient-text">Zephoryx</span>{" "}
               <span className="text-muted-foreground font-semibold text-sm">AI</span>
@@ -93,7 +94,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <footer className="border-t border-border/50 py-16 mt-20">
         <div className="container text-center">
           <div className="flex items-center justify-center gap-2.5 mb-4">
-            <Brain className="h-6 w-6 text-primary" />
+            <img src={logo} alt="Zephoryx AI Lab" className="h-6 w-6 rounded-md object-cover" />
             <span className="font-black text-lg gradient-text">Zephoryx AI</span>
           </div>
           <p className="text-sm text-muted-foreground font-bold">
