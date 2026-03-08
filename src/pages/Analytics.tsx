@@ -26,24 +26,27 @@ const Analytics = () => {
   const [aiSimulation, setAiSimulation] = useState<string>("");
   const [aiCofounder, setAiCofounder] = useState<string>("");
   const [autoAnalyzeTriggered, setAutoAnalyzeTriggered] = useState(false);
+  const autoAnalyzeGuard = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const chatRef = useRef<{ sendMessage: (msg: string) => void } | null>(null);
 
   const fileData = uploadedFiles.map(f => `--- FILE: ${f.name} ---\n${f.content}`).join("\n\n");
 
-  // Auto-trigger analysis when files are uploaded
+  // Auto-trigger analysis when files are uploaded (with guard against double-fire)
   useEffect(() => {
-    if (uploadedFiles.length > 0 && !autoAnalyzeTriggered) {
+    if (uploadedFiles.length > 0 && !autoAnalyzeTriggered && !autoAnalyzeGuard.current) {
+      autoAnalyzeGuard.current = true;
       setAutoAnalyzeTriggered(true);
-      // Small delay to ensure chat panel is ready
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (chatRef.current) {
-          chatRef.current.sendMessage("Analyze this data comprehensively: generate charts, create a data story, and identify key trends and insights.");
+          chatRef.current.sendMessage("Analyze this data: generate charts, identify key trends, and provide a summary with strategic insights.");
         }
-      }, 500);
+      }, 600);
+      return () => clearTimeout(timer);
     }
     if (uploadedFiles.length === 0) {
       setAutoAnalyzeTriggered(false);
+      autoAnalyzeGuard.current = false;
     }
   }, [uploadedFiles.length, autoAnalyzeTriggered]);
 
@@ -82,7 +85,8 @@ const Analytics = () => {
       }
     }
 
-    setAutoAnalyzeTriggered(false); // Reset so auto-analyze triggers again
+    setAutoAnalyzeTriggered(false);
+    autoAnalyzeGuard.current = false; // Reset so auto-analyze triggers again
     setUploadedFiles((prev) => [...prev, ...parsed]);
     toast.success(`${parsed.length} file(s) loaded — AI is analyzing automatically!`);
     if (fileRef.current) fileRef.current.value = "";

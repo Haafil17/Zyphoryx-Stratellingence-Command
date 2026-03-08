@@ -50,20 +50,28 @@ const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData,
     }
   }, [messages]);
 
-  const routeResponse = (text: string, userInput: string) => {
+  const routeResponse = (fullText: string, userInput: string) => {
+    // Strip chart blocks from text before routing to story/forecast/etc tabs
+    const { text } = parseChartBlocks(fullText);
+    const cleanText = text.trim();
+    if (!cleanText) return;
+
     const lower = userInput.toLowerCase();
 
-    if ((lower.includes("story") || lower.includes("summary") || lower.includes("narrative") || lower.includes("executive") || lower.includes("summarize") || lower.includes("comprehensively")) && onStoryGenerated) {
-      onStoryGenerated(text);
+    // For auto-analyze (broad analysis), route to story
+    const isAutoAnalyze = lower.includes("analyze this data") && lower.includes("trends");
+
+    if ((isAutoAnalyze || lower.includes("story") || lower.includes("summary") || lower.includes("narrative") || lower.includes("executive") || lower.includes("summarize")) && onStoryGenerated) {
+      onStoryGenerated(cleanText);
     }
     if ((lower.includes("forecast") || lower.includes("predict") || lower.includes("projection") || lower.includes("future")) && onForecastGenerated) {
-      onForecastGenerated(text);
+      onForecastGenerated(cleanText);
     }
     if ((lower.includes("what if") || lower.includes("scenario") || lower.includes("simulation") || lower.includes("simulate")) && onSimulationGenerated) {
-      onSimulationGenerated(text);
+      onSimulationGenerated(cleanText);
     }
     if ((lower.includes("strategy") || lower.includes("growth") || lower.includes("profit leak") || lower.includes("optimize") || lower.includes("co-founder") || lower.includes("cofounder") || lower.includes("advisor")) && onCofounderGenerated) {
-      onCofounderGenerated(text);
+      onCofounderGenerated(cleanText);
     }
   };
 

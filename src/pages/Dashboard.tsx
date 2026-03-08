@@ -34,11 +34,17 @@ const Dashboard = () => {
   const totalRevenue = revenueData.reduce((s, d) => s + d.revenue, 0);
   const totalExpense = expenseData.reduce((s, d) => s + d.expense, 0);
 
+  const formatValue = (v: number) => {
+    if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+    if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
+    return v.toFixed(0);
+  };
+
   const kpis = hasData ? [
-    { label: "Total Revenue", value: `$${(totalRevenue / 1000).toFixed(1)}K`, change: "From uploaded data", up: true, icon: DollarSign },
-    { label: "Total Expenses", value: `$${(totalExpense / 1000).toFixed(1)}K`, change: "From uploaded data", up: false, icon: TrendingDown },
+    { label: "Total Revenue", value: formatValue(totalRevenue), change: "From uploaded data", up: true, icon: DollarSign },
+    { label: "Total Expenses", value: formatValue(totalExpense), change: "From uploaded data", up: false, icon: TrendingDown },
     { label: "Net Margin", value: totalRevenue > 0 ? `${((1 - totalExpense / totalRevenue) * 100).toFixed(1)}%` : "N/A", change: "Calculated", up: totalRevenue > totalExpense, icon: Activity },
-    { label: "Profit/Loss", value: `$${((totalRevenue - totalExpense) / 1000).toFixed(1)}K`, change: totalRevenue > totalExpense ? "Profitable" : "Loss", up: totalRevenue > totalExpense, icon: Shield },
+    { label: "Profit/Loss", value: formatValue(totalRevenue - totalExpense), change: totalRevenue > totalExpense ? "Profitable" : "Loss", up: totalRevenue > totalExpense, icon: Shield },
   ] : [];
 
   const tryParseChartData = (content: string, category: "revenue" | "expense" | "other") => {
@@ -126,8 +132,23 @@ const Dashboard = () => {
           }
         }
       }
-    } catch (err) {
-      console.error("Dashboard parse error:", err, "content preview:", content.slice(0, 200));
+    } catch {
+      // JSON parse failed — try parsing raw text as tabular data
+      console.log("Dashboard: JSON parse failed, attempting raw text parse for", category);
+      try {
+        const { parseCSV } = await import("@/lib/analytics-ai");
+        const reparsed = parseCSV(content);
+        if (reparsed) {
+          const parsed2 = JSON.parse(reparsed);
+          if (parsed2.headers && parsed2.rows && parsed2.rows.length > 0) {
+            // Recursively call with the properly parsed data
+            tryParseChartData(reparsed, category);
+            return;
+          }
+        }
+      } catch {
+        console.error("Dashboard: raw text re-parse also failed for", category);
+      }
     }
   };
 
@@ -427,15 +448,15 @@ const Dashboard = () => {
                     type: totalRevenue > totalExpense ? "info" : "danger",
                     text: totalRevenue > totalExpense
                       ? `Your business is profitable with a net margin of ${((1 - totalExpense / totalRevenue) * 100).toFixed(1)}%.`
-                      : `Warning: Expenses exceed revenue by $${((totalExpense - totalRevenue) / 1000).toFixed(1)}K. Review cost structure immediately.`,
+                      : `Warning: Expenses exceed revenue by ${formatValue(totalExpense - totalRevenue)}. Review cost structure immediately.`,
                   },
                   {
                     type: "info",
-                    text: `Total revenue across ${revenueData.length} periods: $${(totalRevenue / 1000).toFixed(1)}K. Average per period: $${(totalRevenue / Math.max(revenueData.length, 1) / 1000).toFixed(1)}K.`,
+                    text: `Total revenue across ${revenueData.length} periods: ${formatValue(totalRevenue)}. Average per period: ${formatValue(totalRevenue / Math.max(revenueData.length, 1))}.`,
                   },
                   {
                     type: "warning",
-                    text: `Total expenses: $${(totalExpense / 1000).toFixed(1)}K. Average per period: $${(totalExpense / Math.max(expenseData.length, 1) / 1000).toFixed(1)}K. Use Analytics AI for deeper analysis.`,
+                    text: `Total expenses: ${formatValue(totalExpense)}. Average per period: ${formatValue(totalExpense / Math.max(expenseData.length, 1))}. Use Analytics AI for deeper analysis.`,
                   },
                 ].map((a, i) => (
                   <div key={i} className={`p-5 rounded-xl text-sm leading-relaxed font-semibold ${
