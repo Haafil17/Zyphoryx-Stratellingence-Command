@@ -15,6 +15,7 @@ import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
