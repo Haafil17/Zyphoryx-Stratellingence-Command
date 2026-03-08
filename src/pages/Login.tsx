@@ -50,7 +50,7 @@ const Login = () => {
       >
         <div className="flex items-center justify-center gap-2.5 mb-8">
           <Brain className="h-9 w-9 text-primary" />
-          <span className="text-2xl font-black gradient-text">Zephoryx AI</span>
+          <span className="text-2xl font-black gradient-text">Zephoryx AI Lab</span>
         </div>
         <h2 className="text-xl font-extrabold text-center mb-2">
           {isSignup ? "Create Account" : "Log In"}

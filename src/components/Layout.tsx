@@ -10,9 +10,8 @@ const navLinks = [
   { to: "/problem", label: "Problem & Solution" },
   { to: "/features", label: "Features" },
   { to: "/platform", label: "Platform" },
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/analytics", label: "Analytics" },
-  { to: "/login", label: "Log In" },
+  { to: "/dashboard", label: "Dashboard", highlight: true },
+  { to: "/analytics", label: "Analytics", highlight: true },
   { to: "/contact", label: "Contact" },
 ];
 
@@ -40,6 +39,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 className={`px-3 py-1.5 text-sm font-bold rounded-md transition-colors ${
                   location.pathname === link.to
                     ? "text-primary bg-primary/10"
+                    : link.highlight
+                    ? "text-primary hover:text-primary hover:bg-primary/10"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -78,6 +79,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   className={`px-3 py-2.5 text-sm font-bold rounded-md ${
                     location.pathname === link.to
                       ? "text-primary bg-primary/10"
+                      : link.highlight
+                      ? "text-primary"
                       : "text-muted-foreground"
                   }`}
                 >
