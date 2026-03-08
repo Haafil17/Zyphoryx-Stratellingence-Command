@@ -44,62 +44,91 @@ const Dashboard = () => {
   const tryParseChartData = (content: string, category: "revenue" | "expense" | "other") => {
     try {
       const parsed = JSON.parse(content);
-      if (!parsed.headers || !parsed.rows || parsed.rows.length === 0) return;
-      const headers = parsed.headers.map((h: string) => h.toLowerCase());
+      if (!parsed.headers || !parsed.rows || parsed.rows.length === 0) {
+        console.warn("Dashboard: No headers/rows found in parsed content");
+        return;
+      }
 
-      // Find label column (first non-numeric column)
-      const findLabelCol = () => {
-        const preferred = headers.find((h: string) => h.includes("month") || h.includes("date") || h.includes("period") || h.includes("year") || h.includes("quarter"));
-        return preferred || headers[0];
-      };
+      const originalHeaders: string[] = parsed.headers;
+      const rows: Record<string, string>[] = parsed.rows;
 
-      // Find value column (first numeric-looking column, or by keyword)
-      const findValueCol = (keywords: string[]) => {
-        const byKeyword = headers.find((h: string) => keywords.some(k => h.includes(k)));
-        if (byKeyword) return byKeyword;
-        // Fall back to first column with numeric data
-        for (let i = 1; i < parsed.headers.length; i++) {
-          const val = String(parsed.rows[0][parsed.headers[i]] || "").replace(/[,$%]/g, "");
-          if (!isNaN(parseFloat(val)) && val.trim() !== "") return headers[i];
+      // Find label column index: prefer date/month/period, fallback to first non-numeric column, then col 0
+      let labelIdx = originalHeaders.findIndex((h: string) => {
+        const l = h.toLowerCase();
+        return l.includes("month") || l.includes("date") || l.includes("period") || l.includes("year") || l.includes("quarter") || l.includes("name") || l.includes("category");
+      });
+      if (labelIdx < 0) {
+        // Use first column where first row value is NOT a number
+        labelIdx = originalHeaders.findIndex((h: string) => {
+          const val = String(rows[0]?.[h] || "").replace(/[,$%]/g, "").trim();
+          return isNaN(parseFloat(val)) || val === "";
+        });
+      }
+      if (labelIdx < 0) labelIdx = 0;
+
+      // Find value column index: prefer keyword match, fallback to first numeric column
+      const findNumericCol = (keywords: string[]): number => {
+        // Try keyword match first
+        const kwIdx = originalHeaders.findIndex((h: string) => {
+          const l = h.toLowerCase();
+          return keywords.some(k => l.includes(k));
+        });
+        if (kwIdx >= 0 && kwIdx !== labelIdx) return kwIdx;
+
+        // Fallback: first column (not labelIdx) with numeric data in row 0
+        for (let i = 0; i < originalHeaders.length; i++) {
+          if (i === labelIdx) continue;
+          const val = String(rows[0]?.[originalHeaders[i]] || "").replace(/[,$%]/g, "").trim();
+          if (val !== "" && !isNaN(parseFloat(val))) return i;
         }
-        return headers[1];
+        // Last resort: any column that's not the label
+        return labelIdx === 0 ? 1 : 0;
       };
 
-      const isRevenue = category === "revenue" || headers.some((h: string) => h.includes("revenue") || h.includes("sales") || h.includes("income"));
-      const isExpense = category === "expense" || headers.some((h: string) => h.includes("expense") || h.includes("cost") || h.includes("spending") || h.includes("budget"));
+      const parseNum = (val: unknown): number => {
+        const s = String(val || "0").replace(/[,$%\s]/g, "");
+        const n = parseFloat(s);
+        return isNaN(n) ? 0 : n;
+      };
 
-      if (isRevenue) {
-        const labelCol = findLabelCol();
-        const valueCol = findValueCol(["revenue", "sales", "amount", "income", "total"]);
-        const labelIdx = parsed.headers.findIndex((h: string) => h.toLowerCase() === labelCol);
-        const valueIdx = parsed.headers.findIndex((h: string) => h.toLowerCase() === valueCol);
-        if (labelIdx >= 0 && valueIdx >= 0) {
-          const chartData = parsed.rows.slice(0, 24).map((row: Record<string, string>) => {
-            const rev = parseFloat(String(row[parsed.headers[valueIdx]]).replace(/[,$]/g, "")) || 0;
-            return { month: row[parsed.headers[labelIdx]] || "", revenue: rev, forecast: rev };
+      console.log("Dashboard parsing:", { category, headers: originalHeaders, labelIdx, sampleRow: rows[0] });
+
+      if (category === "revenue" || category === "other") {
+        const valueIdx = findNumericCol(["revenue", "sales", "income", "amount", "total", "price", "value"]);
+        console.log("Revenue valueIdx:", valueIdx, "column:", originalHeaders[valueIdx]);
+        if (valueIdx >= 0 && valueIdx < originalHeaders.length) {
+          const chartData = rows.slice(0, 50).map((row) => {
+            const rev = parseNum(row[originalHeaders[valueIdx]]);
+            return { month: String(row[originalHeaders[labelIdx]] || `Row`), revenue: rev, forecast: rev };
           });
-          if (chartData.length > 0 && chartData.some((d: { revenue: number }) => d.revenue > 0)) {
+          if (chartData.some(d => d.revenue > 0)) {
             setParsedChartData(prev => ({ ...prev, revenueData: chartData }));
+            console.log("Revenue data set:", chartData.length, "rows");
+          } else {
+            console.warn("No positive revenue values found");
           }
         }
       }
 
-      if (isExpense) {
-        const labelCol = findLabelCol();
-        const valueCol = findValueCol(["expense", "cost", "spending", "amount", "total", "budget"]);
-        const labelIdx = parsed.headers.findIndex((h: string) => h.toLowerCase() === labelCol);
-        const valueIdx = parsed.headers.findIndex((h: string) => h.toLowerCase() === valueCol);
-        if (labelIdx >= 0 && valueIdx >= 0) {
-          const chartData = parsed.rows.slice(0, 24).map((row: Record<string, string>) => ({
-            month: row[parsed.headers[labelIdx]] || "",
-            expense: parseFloat(String(row[parsed.headers[valueIdx]]).replace(/[,$]/g, "")) || 0,
+      if (category === "expense" || category === "other") {
+        const valueIdx = findNumericCol(["expense", "cost", "spending", "budget", "amount", "total", "value"]);
+        console.log("Expense valueIdx:", valueIdx, "column:", originalHeaders[valueIdx]);
+        if (valueIdx >= 0 && valueIdx < originalHeaders.length) {
+          const chartData = rows.slice(0, 50).map((row) => ({
+            month: String(row[originalHeaders[labelIdx]] || `Row`),
+            expense: parseNum(row[originalHeaders[valueIdx]]),
           }));
-          if (chartData.length > 0 && chartData.some((d: { expense: number }) => d.expense > 0)) {
+          if (chartData.some(d => d.expense > 0)) {
             setParsedChartData(prev => ({ ...prev, expenseData: chartData }));
+            console.log("Expense data set:", chartData.length, "rows");
+          } else {
+            console.warn("No positive expense values found");
           }
         }
       }
-    } catch { /* not structured JSON */ }
+    } catch (err) {
+      console.error("Dashboard parse error:", err, "content preview:", content.slice(0, 200));
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, category: "revenue" | "expense" | "other") => {
