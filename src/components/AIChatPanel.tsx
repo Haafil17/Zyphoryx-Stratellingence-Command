@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Brain, Send, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,10 @@ interface AIChatPanelProps {
   onCofounderGenerated?: (text: string) => void;
 }
 
+export interface AIChatPanelHandle {
+  sendMessage: (msg: string) => void;
+}
+
 const quickQuestions = [
   "Summarize this data",
   "Generate charts from data",
@@ -27,12 +31,12 @@ const quickQuestions = [
   "Suggest growth strategies",
 ];
 
-const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated, onForecastGenerated, onSimulationGenerated, onCofounderGenerated }: AIChatPanelProps) => {
+const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData, onChartsGenerated, onStoryGenerated, onForecastGenerated, onSimulationGenerated, onCofounderGenerated }, ref) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
       content:
-        "Welcome to **Zephoryx AI Analytics**. Upload your data files and ask me anything — I can analyze trends, **generate interactive charts**, create data stories, forecast outcomes, run what-if simulations, and provide strategic recommendations.\n\nTry asking:\n- \"Generate charts from data\"\n- \"Create a data story\"\n- \"What if we increase price by 10%?\"",
+        "Welcome to **Zephoryx AI Analytics**. Upload your data files and I'll **automatically analyze** them — generating interactive charts, data stories, forecasts, and strategic recommendations.\n\nYou can also ask me directly:\n- \"Generate charts from data\"\n- \"Create a data story\"\n- \"What if we increase price by 10%?\"",
     },
   ]);
   const [input, setInput] = useState("");
@@ -49,14 +53,16 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated, onForecast
   const routeResponse = (text: string, userInput: string) => {
     const lower = userInput.toLowerCase();
 
-    // Route to appropriate tab based on user query
-    if ((lower.includes("story") || lower.includes("summary") || lower.includes("narrative") || lower.includes("executive") || lower.includes("summarize")) && onStoryGenerated) {
+    if ((lower.includes("story") || lower.includes("summary") || lower.includes("narrative") || lower.includes("executive") || lower.includes("summarize") || lower.includes("comprehensively")) && onStoryGenerated) {
       onStoryGenerated(text);
-    } else if ((lower.includes("forecast") || lower.includes("predict") || lower.includes("projection") || lower.includes("future")) && onForecastGenerated) {
+    }
+    if ((lower.includes("forecast") || lower.includes("predict") || lower.includes("projection") || lower.includes("future")) && onForecastGenerated) {
       onForecastGenerated(text);
-    } else if ((lower.includes("what if") || lower.includes("scenario") || lower.includes("simulation") || lower.includes("simulate")) && onSimulationGenerated) {
+    }
+    if ((lower.includes("what if") || lower.includes("scenario") || lower.includes("simulation") || lower.includes("simulate")) && onSimulationGenerated) {
       onSimulationGenerated(text);
-    } else if ((lower.includes("strategy") || lower.includes("growth") || lower.includes("profit leak") || lower.includes("optimize") || lower.includes("co-founder") || lower.includes("cofounder") || lower.includes("advisor")) && onCofounderGenerated) {
+    }
+    if ((lower.includes("strategy") || lower.includes("growth") || lower.includes("profit leak") || lower.includes("optimize") || lower.includes("co-founder") || lower.includes("cofounder") || lower.includes("advisor")) && onCofounderGenerated) {
       onCofounderGenerated(text);
     }
   };
@@ -92,7 +98,6 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated, onForecast
         if (charts.length > 0 && onChartsGenerated) {
           onChartsGenerated(charts);
         }
-        // Route the response text to the appropriate panel
         routeResponse(text, lastSentRef.current);
       },
       onError: (error) => {
@@ -102,11 +107,16 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated, onForecast
     });
   };
 
+  // Expose sendMessage to parent via ref
+  useImperativeHandle(ref, () => ({
+    sendMessage: (msg: string) => handleSend(msg),
+  }));
+
   const renderMessage = (content: string) => {
     const { text, charts } = parseChartBlocks(content);
     return (
       <>
-        <div className="prose prose-sm prose-invert max-w-none [&_p]:mb-2 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-bold [&_li]:text-sm [&_strong]:text-foreground">
+        <div className="prose prose-sm prose-invert max-w-none [&_p]:mb-2 [&_p]:text-foreground [&_h1]:text-base [&_h1]:font-bold [&_h1]:text-foreground [&_h2]:text-sm [&_h2]:font-bold [&_h2]:text-foreground [&_h3]:text-sm [&_h3]:font-bold [&_h3]:text-foreground [&_li]:text-sm [&_li]:text-foreground [&_strong]:text-foreground">
           <ReactMarkdown>{text}</ReactMarkdown>
         </div>
         {charts.map((chart, i) => (
@@ -120,9 +130,9 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated, onForecast
     <div className="glass-card h-[780px] flex flex-col">
       <div className="p-5 border-b border-border/50 flex items-center gap-2">
         <Brain className="h-5 w-5 text-primary" />
-        <h3 className="font-extrabold text-sm">AI Analytics Assistant</h3>
+        <h3 className="font-extrabold text-sm text-foreground">AI Analytics Assistant</h3>
         {fileData && (
-          <span className="ml-auto text-xs text-primary/70 flex items-center gap-1 font-bold">
+          <span className="ml-auto text-xs text-primary flex items-center gap-1 font-bold">
             <Sparkles className="h-3 w-3" /> Data loaded
           </span>
         )}
@@ -134,7 +144,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated, onForecast
               className={`max-w-[90%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === "user"
                   ? "gradient-primary text-primary-foreground font-bold"
-                  : "bg-secondary text-secondary-foreground"
+                  : "bg-secondary text-foreground"
               }`}
             >
               {msg.role === "assistant" ? renderMessage(msg.content) : msg.content}
@@ -143,7 +153,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated, onForecast
         ))}
         {isLoading && messages[messages.length - 1]?.role === "user" && (
           <div className="flex justify-start">
-            <div className="bg-secondary rounded-xl px-4 py-3 text-sm flex items-center gap-2 text-muted-foreground">
+            <div className="bg-secondary rounded-xl px-4 py-3 text-sm flex items-center gap-2 text-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Analyzing your data...
             </div>
           </div>
@@ -162,7 +172,7 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated, onForecast
             }}
             placeholder="Ask about data, trends, risks, what-if scenarios..."
             rows={2}
-            className="bg-secondary border-border text-sm resize-none"
+            className="bg-secondary border-border text-sm resize-none text-foreground placeholder:text-muted-foreground"
             disabled={isLoading}
           />
           <Button
@@ -189,6 +199,8 @@ const AIChatPanel = ({ fileData, onChartsGenerated, onStoryGenerated, onForecast
       </div>
     </div>
   );
-};
+});
+
+AIChatPanel.displayName = "AIChatPanel";
 
 export default AIChatPanel;
