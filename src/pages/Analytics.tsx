@@ -14,6 +14,7 @@ import { parseFileContent, parseExcel } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
 import { useFileDrop } from "@/hooks/use-file-drop";
 import ExportButtons from "@/components/ExportButtons";
+import SavedAnalysesPanel from "@/components/SavedAnalysesPanel";
 
 const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
 
