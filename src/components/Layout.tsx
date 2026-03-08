@@ -39,6 +39,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 className={`px-3 py-1.5 text-sm font-bold rounded-md transition-colors ${
                   location.pathname === link.to
                     ? "text-primary bg-primary/10"
+                    : link.highlight
+                    ? "text-primary hover:text-primary hover:bg-primary/10"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
