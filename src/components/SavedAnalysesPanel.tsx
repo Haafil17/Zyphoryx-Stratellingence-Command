@@ -47,7 +47,7 @@ const SavedAnalysesPanel = ({
     if (!error && data) {
       setAnalyses(data.map(d => ({
         ...d,
-        charts: (d.charts as ChartData[]) || [],
+        charts: (d.charts as unknown as ChartData[]) || [],
         file_names: d.file_names || [],
       })));
     }
