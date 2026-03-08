@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { parseFileContent } from "@/lib/analytics-ai";
+import { parseFileContent, parseCSV } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
 
 const COLORS = ["hsl(187,85%,53%)", "hsl(152,69%,45%)", "hsl(42,92%,56%)", "hsl(280,65%,60%)", "hsl(340,75%,55%)"];
