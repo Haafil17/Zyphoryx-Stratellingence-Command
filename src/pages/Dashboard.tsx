@@ -244,7 +244,21 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Upload Section */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-8 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`glass-card p-8 mb-8 transition-all duration-200 ${isDragging ? "ring-2 ring-primary border-primary/50 bg-primary/5" : ""}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {isDragging && (
+            <div className="text-center py-6 mb-4">
+              <Upload className="h-10 w-10 text-primary mx-auto mb-2 animate-bounce" />
+              <p className="text-sm font-extrabold text-primary">Drop files here to upload</p>
+              <p className="text-[11px] text-muted-foreground mt-1">Files will be added as "Other" — use buttons above for specific categories</p>
+            </div>
+          )}
           <h3 className="text-xs font-bold mb-6 flex items-center gap-2 uppercase tracking-widest text-muted-foreground">
             <Upload className="h-4 w-4 text-primary" /> Data Upload
           </h3>
