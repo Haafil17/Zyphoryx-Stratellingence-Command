@@ -186,7 +186,20 @@ const Analytics = () => {
         </motion.div>
 
         {/* Upload Zone */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`glass-card p-6 mb-8 transition-all duration-200 ${isDragging ? "ring-2 ring-primary border-primary/50 bg-primary/5" : ""}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {isDragging && (
+            <div className="text-center py-6 mb-4">
+              <Upload className="h-10 w-10 text-primary mx-auto mb-2 animate-bounce" />
+              <p className="text-sm font-extrabold text-primary">Drop files here to upload</p>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-4">
             <input ref={fileRef} type="file" multiple accept={ACCEPTED_FILES} className="hidden" onChange={handleUpload} />
             <Button variant="outline" onClick={() => fileRef.current?.click()} className="border-primary/30 text-primary hover:bg-primary/10 font-extrabold">
