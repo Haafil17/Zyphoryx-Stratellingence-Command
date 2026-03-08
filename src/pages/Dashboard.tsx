@@ -136,12 +136,10 @@ const Dashboard = () => {
       // JSON parse failed — try parsing raw text as tabular data
       console.log("Dashboard: JSON parse failed, attempting raw text parse for", category);
       try {
-        const { parseCSV } = await import("@/lib/analytics-ai");
         const reparsed = parseCSV(content);
         if (reparsed) {
           const parsed2 = JSON.parse(reparsed);
           if (parsed2.headers && parsed2.rows && parsed2.rows.length > 0) {
-            // Recursively call with the properly parsed data
             tryParseChartData(reparsed, category);
             return;
           }
