@@ -7,7 +7,7 @@ import {
 import {
   TrendingUp, TrendingDown, DollarSign, Activity,
   Shield, Zap, Brain, Upload, FileText, X, Loader2,
-  BarChart3, FileSpreadsheet, FileImage, AlertCircle, Image, AlertTriangle
+  BarChart3, FileSpreadsheet, FileImage, Image, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -19,18 +19,16 @@ const COLORS = ["hsl(187,85%,53%)", "hsl(152,69%,45%)", "hsl(42,92%,56%)", "hsl(
 const tooltipStyle = { background: "hsl(222,22%,9%)", border: "1px solid hsl(222,15%,18%)", borderRadius: 8, fontSize: 12 };
 const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
 
+const REVENUE_KEYWORDS = ["revenue", "sales", "income", "earning", "turnover", "gross"];
+const EXPENSE_KEYWORDS = ["expense", "cost", "spending", "budget", "expenditure", "outflow"];
+
 const Dashboard = () => {
   const { dashboardFiles: uploadedFiles, setDashboardFiles: setUploadedFiles, parsedChartData, setParsedChartData } = useFileStore();
   const [uploading, setUploading] = useState(false);
-  const revenueRef = useRef<HTMLInputElement>(null);
-  const expenseRef = useRef<HTMLInputElement>(null);
-  const otherRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { revenueData, expenseData } = parsedChartData;
-  const hasRevenue = uploadedFiles.some(f => f.category === "revenue");
-  const hasExpense = uploadedFiles.some(f => f.category === "expense");
-  const hasData = hasRevenue && hasExpense;
-  const needsCompanion = (hasRevenue && !hasExpense) || (!hasRevenue && hasExpense);
+  const hasData = revenueData.length > 0 || expenseData.length > 0;
 
   const totalRevenue = revenueData.reduce((s, d) => s + d.revenue, 0);
   const totalExpense = expenseData.reduce((s, d) => s + d.expense, 0);
@@ -48,110 +46,126 @@ const Dashboard = () => {
     { label: "Profit/Loss", value: formatValue(totalRevenue - totalExpense), change: totalRevenue > totalExpense ? "Profitable" : "Loss", up: totalRevenue > totalExpense, icon: Shield },
   ] : [];
 
-  const tryParseChartData = (content: string, category: "revenue" | "expense" | "other") => {
+  const parseNum = (val: unknown): number => {
+    const s = String(val || "0").replace(/[₹$€£¥,\s%]/g, "");
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  };
+
+  const findColumnByKeywords = (headers: string[], keywords: string[], excludeIdx?: number): number => {
+    const idx = headers.findIndex((h, i) => {
+      if (i === excludeIdx) return false;
+      const l = h.toLowerCase();
+      return keywords.some(k => l.includes(k));
+    });
+    return idx;
+  };
+
+  const findLabelColumn = (headers: string[], rows: Record<string, string>[]): number => {
+    let labelIdx = headers.findIndex((h) => {
+      const l = h.toLowerCase();
+      return l.includes("month") || l.includes("date") || l.includes("period") || l.includes("year") || l.includes("quarter") || l.includes("name") || l.includes("category");
+    });
+    if (labelIdx < 0) {
+      labelIdx = headers.findIndex((h) => {
+        const val = String(rows[0]?.[h] || "").replace(/[,$%]/g, "").trim();
+        return isNaN(parseFloat(val)) || val === "";
+      });
+    }
+    if (labelIdx < 0) labelIdx = 0;
+    return labelIdx;
+  };
+
+  const findFirstNumericCol = (headers: string[], rows: Record<string, string>[], excludeIdxs: number[]): number => {
+    for (let i = 0; i < headers.length; i++) {
+      if (excludeIdxs.includes(i)) continue;
+      const val = String(rows[0]?.[headers[i]] || "").replace(/[,$%₹$€£¥]/g, "").trim();
+      if (val !== "" && !isNaN(parseFloat(val))) return i;
+    }
+    return -1;
+  };
+
+  const tryParseChartData = (content: string) => {
     try {
       const parsed = JSON.parse(content);
       if (!parsed.headers || !parsed.rows || parsed.rows.length === 0) {
-        console.warn("Dashboard: No headers/rows found in parsed content");
+        console.warn("Dashboard: No headers/rows found");
         return;
       }
 
-      const originalHeaders: string[] = parsed.headers;
+      const headers: string[] = parsed.headers;
       const rows: Record<string, string>[] = parsed.rows;
+      const labelIdx = findLabelColumn(headers, rows);
 
-      // Find label column index: prefer date/month/period, fallback to first non-numeric column, then col 0
-      let labelIdx = originalHeaders.findIndex((h: string) => {
-        const l = h.toLowerCase();
-        return l.includes("month") || l.includes("date") || l.includes("period") || l.includes("year") || l.includes("quarter") || l.includes("name") || l.includes("category");
-      });
-      if (labelIdx < 0) {
-        // Use first column where first row value is NOT a number
-        labelIdx = originalHeaders.findIndex((h: string) => {
-          const val = String(rows[0]?.[h] || "").replace(/[,$%]/g, "").trim();
-          return isNaN(parseFloat(val)) || val === "";
-        });
-      }
-      if (labelIdx < 0) labelIdx = 0;
+      // Try to find revenue column
+      let revIdx = findColumnByKeywords(headers, REVENUE_KEYWORDS, labelIdx);
+      // Try to find expense column
+      let expIdx = findColumnByKeywords(headers, EXPENSE_KEYWORDS, labelIdx);
 
-      // Find value column index: prefer keyword match, fallback to first numeric column
-      const findNumericCol = (keywords: string[]): number => {
-        // Try keyword match first
-        const kwIdx = originalHeaders.findIndex((h: string) => {
-          const l = h.toLowerCase();
-          return keywords.some(k => l.includes(k));
-        });
-        if (kwIdx >= 0 && kwIdx !== labelIdx) return kwIdx;
-
-        // Fallback: first column (not labelIdx) with numeric data in row 0
-        for (let i = 0; i < originalHeaders.length; i++) {
-          if (i === labelIdx) continue;
-          const val = String(rows[0]?.[originalHeaders[i]] || "").replace(/[,$%]/g, "").trim();
-          if (val !== "" && !isNaN(parseFloat(val))) return i;
+      // If neither found, use first two numeric columns
+      if (revIdx < 0 && expIdx < 0) {
+        const first = findFirstNumericCol(headers, rows, [labelIdx]);
+        if (first >= 0) {
+          revIdx = first;
+          const second = findFirstNumericCol(headers, rows, [labelIdx, first]);
+          if (second >= 0) expIdx = second;
         }
-        // Last resort: any column that's not the label
-        return labelIdx === 0 ? 1 : 0;
-      };
+      } else if (revIdx >= 0 && expIdx < 0) {
+        // Have revenue, find next numeric for expense
+        const next = findFirstNumericCol(headers, rows, [labelIdx, revIdx]);
+        if (next >= 0) expIdx = next;
+      } else if (expIdx >= 0 && revIdx < 0) {
+        const next = findFirstNumericCol(headers, rows, [labelIdx, expIdx]);
+        if (next >= 0) revIdx = next;
+      }
 
-      const parseNum = (val: unknown): number => {
-        const s = String(val || "0").replace(/[₹$€£¥,\s%]/g, "");
-        const n = parseFloat(s);
-        return isNaN(n) ? 0 : n;
-      };
+      console.log("Dashboard parsing:", { headers, labelIdx, revIdx, expIdx, revCol: headers[revIdx], expCol: headers[expIdx] });
 
-      console.log("Dashboard parsing:", { category, headers: originalHeaders, labelIdx, sampleRow: rows[0] });
-
-      if (category === "revenue" || category === "other") {
-        const valueIdx = findNumericCol(["revenue", "sales", "income", "amount", "total", "price", "value"]);
-        console.log("Revenue valueIdx:", valueIdx, "column:", originalHeaders[valueIdx]);
-        if (valueIdx >= 0 && valueIdx < originalHeaders.length) {
-          const chartData = rows.slice(0, 50).map((row) => {
-            const rev = parseNum(row[originalHeaders[valueIdx]]);
-            return { month: String(row[originalHeaders[labelIdx]] || `Row`), revenue: rev, forecast: rev };
-          });
-          if (chartData.some(d => d.revenue > 0)) {
-            setParsedChartData(prev => ({ ...prev, revenueData: chartData }));
-            console.log("Revenue data set:", chartData.length, "rows");
-          } else {
-            console.warn("No positive revenue values found");
-          }
+      if (revIdx >= 0) {
+        const chartData = rows.slice(0, 50).map((row) => ({
+          month: String(row[headers[labelIdx]] || "Row"),
+          revenue: parseNum(row[headers[revIdx]]),
+          forecast: parseNum(row[headers[revIdx]]),
+        }));
+        if (chartData.some(d => d.revenue > 0)) {
+          setParsedChartData(prev => ({ ...prev, revenueData: chartData }));
         }
       }
 
-      if (category === "expense" || category === "other") {
-        const valueIdx = findNumericCol(["expense", "cost", "spending", "budget", "amount", "total", "value"]);
-        console.log("Expense valueIdx:", valueIdx, "column:", originalHeaders[valueIdx]);
-        if (valueIdx >= 0 && valueIdx < originalHeaders.length) {
-          const chartData = rows.slice(0, 50).map((row) => ({
-            month: String(row[originalHeaders[labelIdx]] || `Row`),
-            expense: parseNum(row[originalHeaders[valueIdx]]),
-          }));
-          if (chartData.some(d => d.expense > 0)) {
-            setParsedChartData(prev => ({ ...prev, expenseData: chartData }));
-            console.log("Expense data set:", chartData.length, "rows");
-          } else {
-            console.warn("No positive expense values found");
-          }
+      if (expIdx >= 0) {
+        const chartData = rows.slice(0, 50).map((row) => ({
+          month: String(row[headers[labelIdx]] || "Row"),
+          expense: parseNum(row[headers[expIdx]]),
+        }));
+        if (chartData.some(d => d.expense > 0)) {
+          setParsedChartData(prev => ({ ...prev, expenseData: chartData }));
         }
+      }
+
+      // If we only found one numeric column, use it for both
+      if (revIdx >= 0 && expIdx < 0) {
+        toast.info(`Found "${headers[revIdx]}" column. Upload a file with expense data for full analysis, or this column will be used for both.`);
+      } else if (expIdx >= 0 && revIdx < 0) {
+        toast.info(`Found "${headers[expIdx]}" column. Upload a file with revenue data for full analysis.`);
       }
     } catch {
-      // JSON parse failed — try parsing raw text as tabular data
-      console.log("Dashboard: JSON parse failed, attempting raw text parse for", category);
+      console.log("Dashboard: JSON parse failed, attempting raw text parse");
       try {
         const reparsed = parseCSV(content);
         if (reparsed) {
           const parsed2 = JSON.parse(reparsed);
           if (parsed2.headers && parsed2.rows && parsed2.rows.length > 0) {
-            tryParseChartData(reparsed, category);
+            tryParseChartData(reparsed);
             return;
           }
         }
       } catch {
-        console.error("Dashboard: raw text re-parse also failed for", category);
+        console.error("Dashboard: raw text re-parse also failed");
       }
     }
   };
 
-  const processFilesForCategory = async (files: File[], category: "revenue" | "expense" | "other") => {
+  const processFiles = async (files: File[]) => {
     if (!files.length) return;
     setUploading(true);
 
@@ -162,7 +176,7 @@ const Dashboard = () => {
 
       try {
         if (isImage) {
-          setUploadedFiles(prev => [...prev, { name: file.name, content: `[Image: ${file.name}]`, category, type: ext }]);
+          setUploadedFiles(prev => [...prev, { name: file.name, content: `[Image: ${file.name}]`, category: "other", type: ext }]);
           toast.success(`${file.name} uploaded`);
           continue;
         }
@@ -171,9 +185,9 @@ const Dashboard = () => {
           const buffer = await file.arrayBuffer();
           const content = parseExcel(buffer);
           if (content) {
-            setUploadedFiles(prev => [...prev, { name: file.name, content, category, type: ext }]);
-            tryParseChartData(content, category);
-            toast.success(`${file.name} uploaded to ${category}`);
+            setUploadedFiles(prev => [...prev, { name: file.name, content, category: "other", type: ext }]);
+            tryParseChartData(content);
+            toast.success(`${file.name} uploaded & parsed`);
           } else {
             toast.error(`Could not parse ${file.name}`);
           }
@@ -181,46 +195,41 @@ const Dashboard = () => {
         }
 
         if (ext === "pdf") {
-          setUploadedFiles(prev => [...prev, { name: file.name, content: `[PDF: ${file.name} — PDF parsing not supported client-side]`, category, type: ext }]);
+          setUploadedFiles(prev => [...prev, { name: file.name, content: `[PDF: ${file.name}]`, category: "other", type: ext }]);
           toast.info(`${file.name} uploaded (PDF content cannot be auto-parsed)`);
           continue;
         }
 
         const text = await file.text();
         const content = parseFileContent(text, file.name);
-        setUploadedFiles(prev => [...prev, { name: file.name, content, category, type: ext }]);
-        tryParseChartData(content, category);
-        toast.success(`${file.name} uploaded to ${category}`);
+        setUploadedFiles(prev => [...prev, { name: file.name, content, category: "other", type: ext }]);
+        tryParseChartData(content);
+        toast.success(`${file.name} uploaded & parsed`);
       } catch {
         toast.error(`Failed to read ${file.name}`);
       }
     }
     setUploading(false);
-
-    if (category === "revenue" && !hasExpense) {
-      toast.info("Please also upload your Expense data to see the full dashboard.");
-    } else if (category === "expense" && !hasRevenue) {
-      toast.info("Please also upload your Revenue data to see the full dashboard.");
-    }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, category: "revenue" | "expense" | "other") => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    await processFilesForCategory(files, category);
+    await processFiles(files);
+    if (fileRef.current) fileRef.current.value = "";
   };
 
-  // Drag-and-drop: defaults to "other" category; user can re-categorize
   const handleDroppedFiles = useCallback((files: File[]) => {
-    processFilesForCategory(files, "other");
+    processFiles(files);
   }, []);
 
   const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useFileDrop(handleDroppedFiles);
 
   const removeFile = (idx: number) => {
-    const file = uploadedFiles[idx];
     setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
-    if (file.category === "revenue") setParsedChartData(prev => ({ ...prev, revenueData: [] }));
-    if (file.category === "expense") setParsedChartData(prev => ({ ...prev, expenseData: [] }));
+    // Reset chart data when files removed
+    if (uploadedFiles.length <= 1) {
+      setParsedChartData({ revenueData: [], expenseData: [] });
+    }
   };
 
   const getFileIcon = (type: string) => {
@@ -238,11 +247,11 @@ const Dashboard = () => {
             Executive <span className="gradient-text">Command Center</span>
           </h1>
           <p className="text-base text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-            Upload your revenue and expense data to generate real-time KPIs, interactive charts, and strategic insights — all from your actual data.
+            Upload your data file and the dashboard will <strong className="text-foreground">automatically detect</strong> revenue, expenses, and other metrics to generate KPIs, charts, and insights.
           </p>
         </motion.div>
 
-        {/* Upload Section */}
+        {/* Single Upload Zone */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -255,59 +264,36 @@ const Dashboard = () => {
             <div className="text-center py-6 mb-4">
               <Upload className="h-10 w-10 text-primary mx-auto mb-2 animate-bounce" />
               <p className="text-sm font-extrabold text-primary">Drop files here to upload</p>
-              <p className="text-[11px] text-muted-foreground mt-1">Files will be added as "Other" — use buttons above for specific categories</p>
             </div>
           )}
-          <h3 className="text-xs font-bold mb-6 flex items-center gap-2 uppercase tracking-widest text-muted-foreground">
-            <Upload className="h-4 w-4 text-primary" /> Data Upload
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-            {[
-              { ref: revenueRef, cat: "revenue" as const, has: hasRevenue, icon: DollarSign, label: "Revenue Data", sub: "Sales, income, revenue files", cls: "primary" },
-              { ref: expenseRef, cat: "expense" as const, has: hasExpense, icon: TrendingDown, label: "Expense Data", sub: "Costs, budgets, spending files", cls: "accent" },
-              { ref: otherRef, cat: "other" as const, has: false, icon: FileText, label: "Other Data", sub: "HR, ops, market, images, PDFs", cls: "foreground" },
-            ].map(({ ref, cat, has, icon: Icon, label, sub, cls }) => (
-              <div key={cat}>
-                <input ref={ref} type="file" multiple accept={ACCEPTED_FILES} className="hidden" onChange={(e) => handleFileUpload(e, cat)} />
-                <Button
-                  variant="outline"
-                  onClick={() => ref.current?.click()}
-                  className={`w-full h-auto py-6 transition-all border-2 ${
-                    has ? `border-${cls} text-${cls} bg-${cls}/5` : `border-${cls}/20 text-${cls} hover:bg-${cls}/5`
-                  }`}
-                  disabled={uploading}
-                >
-                  <div className="flex flex-col items-center gap-2.5">
-                    <Icon className="h-7 w-7" />
-                    <span className="text-sm font-extrabold">{label} {has ? "✓" : cat !== "other" ? "(Required)" : "(Optional)"}</span>
-                    <span className="text-[11px] text-muted-foreground font-medium">{sub}</span>
-                  </div>
-                </Button>
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center gap-4">
+            <input ref={fileRef} type="file" multiple accept={ACCEPTED_FILES} className="hidden" onChange={handleFileUpload} />
+            <Button
+              variant="outline"
+              onClick={() => fileRef.current?.click()}
+              className="border-primary/30 text-primary hover:bg-primary/10 font-extrabold"
+              disabled={uploading}
+            >
+              <Upload className="h-4 w-4 mr-2" /> Upload Data Files
+            </Button>
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1.5 font-medium">
+              <Image className="h-3 w-3" />
+              CSV, JSON, TXT, PDF, Excel, Images — revenue & expense columns auto-detected
+            </span>
           </div>
-          <p className="text-[11px] text-muted-foreground mb-4 flex items-center gap-1.5 font-medium">
-            <Image className="h-3 w-3" />
-            Supports CSV, JSON, TXT, TSV, PDF, Excel, JPEG, PNG, GIF, WebP, SVG
-          </p>
           {uploading && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-3">
               <Loader2 className="h-3 w-3 animate-spin" /> Processing files...
             </div>
           )}
           {uploadedFiles.length > 0 && (
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap mt-4">
               {uploadedFiles.map((f, i) => {
                 const Icon = getFileIcon(f.type);
                 return (
-                  <div key={i} className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold ${
-                    f.category === "revenue" ? "bg-primary/10 text-primary" :
-                    f.category === "expense" ? "bg-accent/10 text-accent" :
-                    "bg-secondary text-foreground"
-                  }`}>
+                  <div key={i} className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-primary/10 text-primary text-xs font-bold">
                     <Icon className="h-3 w-3" />
                     {f.name}
-                    <span className="text-[10px] opacity-60">({f.category})</span>
                     <button onClick={() => removeFile(i)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
                   </div>
                 );
@@ -316,47 +302,17 @@ const Dashboard = () => {
           )}
         </motion.div>
 
-        {/* Companion Warning */}
-        {needsCompanion && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card p-6 mb-8 border-accent/40 bg-accent/5">
-            <div className="flex items-center gap-4">
-              <AlertCircle className="h-6 w-6 text-accent shrink-0" />
-              <div>
-                <p className="text-sm font-extrabold text-accent">
-                  {hasRevenue ? "Expense data required" : "Revenue data required"}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Upload your {hasRevenue ? "expense" : "revenue"} data to unlock the full dashboard with KPIs, charts, and analysis.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-auto border-accent/30 text-accent hover:bg-accent/10 font-extrabold shrink-0"
-                onClick={() => hasRevenue ? expenseRef.current?.click() : revenueRef.current?.click()}
-              >
-                Upload {hasRevenue ? "Expense" : "Revenue"}
-              </Button>
-            </div>
-          </motion.div>
-        )}
-
         {/* Empty State */}
-        {!hasData && !needsCompanion && (
+        {!hasData && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card p-20 text-center mb-8">
             <BarChart3 className="h-20 w-20 text-muted-foreground mx-auto mb-8 opacity-20" />
             <h2 className="text-3xl font-black mb-4">No Data Uploaded Yet</h2>
             <p className="text-base text-muted-foreground max-w-lg mx-auto leading-relaxed mb-8">
-              Upload your <strong className="text-primary">Revenue</strong> and <strong className="text-accent">Expense</strong> data files to see real-time KPIs, interactive charts, trend analysis, and strategic alerts.
+              Upload a data file containing your <strong className="text-primary">revenue</strong> and <strong className="text-accent">expense</strong> data. The dashboard will automatically detect the right columns and generate KPIs, charts, and insights.
             </p>
-            <div className="flex gap-4 justify-center">
-              <Button variant="outline" onClick={() => revenueRef.current?.click()} className="border-primary/30 text-primary hover:bg-primary/10 font-extrabold px-6">
-                <DollarSign className="h-4 w-4 mr-2" /> Upload Revenue
-              </Button>
-              <Button variant="outline" onClick={() => expenseRef.current?.click()} className="border-accent/30 text-accent hover:bg-accent/10 font-extrabold px-6">
-                <TrendingDown className="h-4 w-4 mr-2" /> Upload Expense
-              </Button>
-            </div>
+            <Button variant="outline" onClick={() => fileRef.current?.click()} className="border-primary/30 text-primary hover:bg-primary/10 font-extrabold px-6">
+              <Upload className="h-4 w-4 mr-2" /> Upload Your Data
+            </Button>
           </motion.div>
         )}
 
@@ -390,7 +346,7 @@ const Dashboard = () => {
             <div className="grid lg:grid-cols-3 gap-5 mb-6">
               <div className="lg:col-span-2 glass-card p-7">
                 <h3 className="text-sm font-extrabold mb-6 flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-primary" /> Revenue vs Forecast
+                  <BarChart3 className="h-4 w-4 text-primary" /> Revenue Trend
                 </h3>
                 <ResponsiveContainer width="100%" height={320}>
                   <AreaChart data={revenueData}>
@@ -405,7 +361,6 @@ const Dashboard = () => {
                     <YAxis stroke="hsl(215,15%,55%)" fontSize={11} />
                     <Tooltip contentStyle={tooltipStyle} />
                     <Area type="monotone" dataKey="revenue" stroke="hsl(187,85%,53%)" fill="url(#revGrad)" strokeWidth={2.5} />
-                    <Line type="monotone" dataKey="forecast" stroke="hsl(42,92%,56%)" strokeDasharray="5 5" strokeWidth={1.5} dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
