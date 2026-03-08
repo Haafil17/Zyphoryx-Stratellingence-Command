@@ -104,7 +104,6 @@ const DynamicChart = ({ chart }: { chart: ChartData }) => {
           </Treemap>
         );
       }
-        );
       case "funnel":
         // Render funnel as horizontal bars sorted by value descending
         const sorted = [...data].sort((a, b) => b.value - a.value);
