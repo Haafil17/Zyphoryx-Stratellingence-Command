@@ -95,9 +95,26 @@ export function parseCSV(text: string): string {
   const lines = text.split("\n").filter(l => l.trim());
   if (lines.length === 0) return "";
   
-  const headers = lines[0].split(",").map(h => h.trim());
+  // Auto-detect delimiter (comma, semicolon, tab)
+  const firstLine = lines[0];
+  const delimiter = firstLine.includes("\t") ? "\t" : firstLine.includes(";") ? ";" : ",";
+  
+  const splitLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (const char of line) {
+      if (char === '"') { inQuotes = !inQuotes; continue; }
+      if (char === delimiter && !inQuotes) { result.push(current.trim()); current = ""; continue; }
+      current += char;
+    }
+    result.push(current.trim());
+    return result;
+  };
+
+  const headers = splitLine(lines[0]);
   const rows = lines.slice(1).map(line => {
-    const vals = line.split(",").map(v => v.trim());
+    const vals = splitLine(line);
     const obj: Record<string, string> = {};
     headers.forEach((h, i) => { obj[h] = vals[i] || ""; });
     return obj;
