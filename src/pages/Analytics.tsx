@@ -390,8 +390,8 @@ const Analytics = () => {
             )}
           </div>
 
-          {/* Right: AI Chat */}
-          <div>
+          {/* Right: AI Chat + Saved */}
+          <div className="space-y-4">
             <AIChatPanel
               ref={chatRef}
               fileData={fileData}
@@ -400,6 +400,22 @@ const Analytics = () => {
               onForecastGenerated={handleForecastGenerated}
               onSimulationGenerated={handleSimulationGenerated}
               onCofounderGenerated={handleCofounderGenerated}
+            />
+            <SavedAnalysesPanel
+              fileNames={uploadedFiles.map(f => f.name)}
+              charts={aiCharts}
+              story={aiStory}
+              forecast={aiForecast}
+              simulation={aiSimulation}
+              cofounder={aiCofounder}
+              onLoad={(analysis) => {
+                setAiCharts(analysis.charts);
+                setAiStory(analysis.story);
+                setAiForecast(analysis.forecast);
+                setAiSimulation(analysis.simulation);
+                setAiCofounder(analysis.cofounder);
+                setActiveTab("charts");
+              }}
             />
           </div>
         </div>
