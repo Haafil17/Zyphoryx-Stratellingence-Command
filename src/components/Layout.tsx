@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import logo from "@/assets/logo.png";
@@ -71,9 +71,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             {user ? (
-              <Button size="sm" variant="ghost" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground font-bold text-xs">
-                <LogOut className="h-4 w-4 mr-1" /> Sign Out
-              </Button>
+              <div className="flex items-center gap-1">
+                <Link to="/profile">
+                  <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground font-semibold text-xs">
+                    <User className="h-4 w-4 mr-1" /> Profile
+                  </Button>
+                </Link>
+                <Button size="sm" variant="ghost" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground font-semibold text-xs">
+                  <LogOut className="h-4 w-4 mr-1" /> Sign Out
+                </Button>
+              </div>
             ) : (
               <Link to="/login">
                 <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground font-bold text-xs hidden sm:inline-flex">
