@@ -87,16 +87,16 @@ const Index = () => {
               <Brain className="h-4 w-4" />
               Strategic Intelligence Platform
             </div>
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[1.02] mb-8 tracking-tight">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.02] mb-8 tracking-tight">
               <span className="gradient-text">Zephoryx AI</span>
               <br />
-              <span className="text-foreground">Your Strategic</span>
+              <span className="text-foreground">Strategic</span>
               <br />
               <span className="text-foreground">Decision Engine</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed font-medium">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-xl mb-10 leading-relaxed">
               Transform raw business data into strategic firepower. Predict outcomes, simulate scenarios,
-              and lead with AI-driven intelligence that thinks like a seasoned co-founder.
+              and lead with intelligence that thinks like a co-founder.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/contact">

@@ -245,12 +245,12 @@ const Dashboard = () => {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-10">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black flex items-center gap-3 tracking-tight leading-tight">
-                <Brain className="h-9 w-9 text-primary" />
+              <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-3 tracking-tight leading-tight">
+                <Brain className="h-8 w-8 text-primary" />
                 Executive <span className="gradient-text">Command Center</span>
               </h1>
-              <p className="text-base text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-                Upload your business data and the dashboard will <strong className="text-foreground">auto-detect</strong> revenue, expenses, and key metrics — generating KPIs, interactive charts, and strategic insights instantly.
+              <p className="text-sm text-muted-foreground mt-2 max-w-xl leading-relaxed">
+                Drop your business data below — revenue, expenses, and key metrics are <strong className="text-foreground">auto-detected</strong> to generate live KPIs, charts, and insights.
               </p>
             </div>
             {hasData && (
