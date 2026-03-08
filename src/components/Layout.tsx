@@ -10,9 +10,8 @@ const navLinks = [
   { to: "/problem", label: "Problem & Solution" },
   { to: "/features", label: "Features" },
   { to: "/platform", label: "Platform" },
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/analytics", label: "Analytics" },
-  { to: "/login", label: "Log In" },
+  { to: "/dashboard", label: "Dashboard", highlight: true },
+  { to: "/analytics", label: "Analytics", highlight: true },
   { to: "/contact", label: "Contact" },
 ];
 
