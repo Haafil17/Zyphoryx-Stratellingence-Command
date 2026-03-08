@@ -12,6 +12,7 @@ import AIChatPanel from "@/components/AIChatPanel";
 import DynamicChart, { ChartData } from "@/components/DynamicChart";
 import { parseFileContent, parseExcel } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
+import { useFileDrop } from "@/hooks/use-file-drop";
 
 const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
 
@@ -62,8 +63,7 @@ const Analytics = () => {
 
   const tableData = getTableData();
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+  const processFiles = async (files: File[]) => {
     if (!files.length) return;
 
     const parsed: { name: string; content: string; type: string }[] = [];
@@ -101,6 +101,13 @@ const Analytics = () => {
     toast.success(`${parsed.length} file(s) loaded — AI is analyzing automatically!`);
     if (fileRef.current) fileRef.current.value = "";
   };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await processFiles(files);
+  };
+
+  const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useFileDrop(processFiles);
 
   const removeFile = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
@@ -179,7 +186,20 @@ const Analytics = () => {
         </motion.div>
 
         {/* Upload Zone */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`glass-card p-6 mb-8 transition-all duration-200 ${isDragging ? "ring-2 ring-primary border-primary/50 bg-primary/5" : ""}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {isDragging && (
+            <div className="text-center py-6 mb-4">
+              <Upload className="h-10 w-10 text-primary mx-auto mb-2 animate-bounce" />
+              <p className="text-sm font-extrabold text-primary">Drop files here to upload</p>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-4">
             <input ref={fileRef} type="file" multiple accept={ACCEPTED_FILES} className="hidden" onChange={handleUpload} />
             <Button variant="outline" onClick={() => fileRef.current?.click()} className="border-primary/30 text-primary hover:bg-primary/10 font-extrabold">

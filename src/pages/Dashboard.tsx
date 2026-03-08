@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { parseFileContent, parseCSV, parseExcel } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
+import { useFileDrop } from "@/hooks/use-file-drop";
 
 const COLORS = ["hsl(187,85%,53%)", "hsl(152,69%,45%)", "hsl(42,92%,56%)", "hsl(280,65%,60%)", "hsl(340,75%,55%)"];
 const tooltipStyle = { background: "hsl(222,22%,9%)", border: "1px solid hsl(222,15%,18%)", borderRadius: 8, fontSize: 12 };
@@ -150,8 +151,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, category: "revenue" | "expense" | "other") => {
-    const files = Array.from(e.target.files || []);
+  const processFilesForCategory = async (files: File[], category: "revenue" | "expense" | "other") => {
     if (!files.length) return;
     setUploading(true);
 
@@ -196,7 +196,6 @@ const Dashboard = () => {
       }
     }
     setUploading(false);
-    if (e.target) e.target.value = "";
 
     if (category === "revenue" && !hasExpense) {
       toast.info("Please also upload your Expense data to see the full dashboard.");
@@ -204,6 +203,18 @@ const Dashboard = () => {
       toast.info("Please also upload your Revenue data to see the full dashboard.");
     }
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, category: "revenue" | "expense" | "other") => {
+    const files = Array.from(e.target.files || []);
+    await processFilesForCategory(files, category);
+  };
+
+  // Drag-and-drop: defaults to "other" category; user can re-categorize
+  const handleDroppedFiles = useCallback((files: File[]) => {
+    processFilesForCategory(files, "other");
+  }, []);
+
+  const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useFileDrop(handleDroppedFiles);
 
   const removeFile = (idx: number) => {
     const file = uploadedFiles[idx];
@@ -232,7 +243,21 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Upload Section */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-8 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`glass-card p-8 mb-8 transition-all duration-200 ${isDragging ? "ring-2 ring-primary border-primary/50 bg-primary/5" : ""}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {isDragging && (
+            <div className="text-center py-6 mb-4">
+              <Upload className="h-10 w-10 text-primary mx-auto mb-2 animate-bounce" />
+              <p className="text-sm font-extrabold text-primary">Drop files here to upload</p>
+              <p className="text-[11px] text-muted-foreground mt-1">Files will be added as "Other" — use buttons above for specific categories</p>
+            </div>
+          )}
           <h3 className="text-xs font-bold mb-6 flex items-center gap-2 uppercase tracking-widest text-muted-foreground">
             <Upload className="h-4 w-4 text-primary" /> Data Upload
           </h3>
