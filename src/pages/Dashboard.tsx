@@ -205,6 +205,18 @@ const Dashboard = () => {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, category: "revenue" | "expense" | "other") => {
+    const files = Array.from(e.target.files || []);
+    await processFilesForCategory(files, category);
+  };
+
+  // Drag-and-drop: defaults to "other" category; user can re-categorize
+  const handleDroppedFiles = useCallback((files: File[]) => {
+    processFilesForCategory(files, "other");
+  }, []);
+
+  const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useFileDrop(handleDroppedFiles);
+
   const removeFile = (idx: number) => {
     const file = uploadedFiles[idx];
     setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
