@@ -12,6 +12,7 @@ import AIChatPanel from "@/components/AIChatPanel";
 import DynamicChart, { ChartData } from "@/components/DynamicChart";
 import { parseFileContent, parseExcel } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
+import { useFileDrop } from "@/hooks/use-file-drop";
 
 const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
 
