@@ -1,3 +1,5 @@
+import * as XLSX from "xlsx";
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-data`;
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -95,14 +97,12 @@ export async function streamAnalyticsChat({
  * Auto-detect delimiter from a text file. Supports comma, semicolon, tab, pipe.
  */
 function detectDelimiter(firstLine: string): string {
-  // Count occurrences of each candidate
   const candidates = [
     { delim: "|", count: (firstLine.match(/\|/g) || []).length },
     { delim: "\t", count: (firstLine.match(/\t/g) || []).length },
     { delim: ";", count: (firstLine.match(/;/g) || []).length },
     { delim: ",", count: (firstLine.match(/,/g) || []).length },
   ];
-  // Pick the one with highest count (minimum 1)
   candidates.sort((a, b) => b.count - a.count);
   return candidates[0].count > 0 ? candidates[0].delim : ",";
 }
@@ -138,17 +138,41 @@ export function parseCSV(text: string): string {
 }
 
 /**
+ * Parse an Excel file (XLSX/XLS) from an ArrayBuffer into {headers, rows} JSON.
+ */
+export function parseExcel(buffer: ArrayBuffer): string {
+  try {
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) return "";
+    const sheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+    if (jsonData.length === 0) return "";
+
+    const headers = Object.keys(jsonData[0]);
+    const rows = jsonData.slice(0, 200).map(item => {
+      const obj: Record<string, string> = {};
+      headers.forEach(h => { obj[h] = String(item[h] ?? ""); });
+      return obj;
+    });
+
+    return JSON.stringify({ headers, rows, totalRows: jsonData.length }, null, 2);
+  } catch (e) {
+    console.error("Excel parse error:", e);
+    return "";
+  }
+}
+
+/**
  * Detect if a text blob is tabular (pipe-delimited, whitespace-aligned, etc.)
- * and convert to {headers, rows} JSON.
  */
 function tryParseTabularText(text: string): string | null {
   const lines = text.split("\n").filter(l => l.trim());
   if (lines.length < 2) return null;
 
-  // Check for pipe-delimited data (e.g. "| Col1 | Col2 |")
+  // Check for pipe-delimited data
   const pipeLines = lines.filter(l => l.includes("|"));
   if (pipeLines.length >= 2) {
-    // Filter out separator lines (e.g. "|---|---|")
     const dataLines = pipeLines.filter(l => !l.replace(/[\s|:-]/g, "").match(/^$/));
     if (dataLines.length >= 2) {
       const parsePipeLine = (line: string): string[] =>
@@ -158,7 +182,6 @@ function tryParseTabularText(text: string): string | null {
       if (headers.length >= 2) {
         const rows = dataLines.slice(1)
           .filter(l => {
-            // Skip separator lines like |---|---|
             const cells = parsePipeLine(l);
             return cells.length > 0 && !cells.every(c => c.match(/^[-:]+$/));
           })
@@ -178,14 +201,13 @@ function tryParseTabularText(text: string): string | null {
 
   // Check for tab-delimited
   if (lines[0].includes("\t")) {
-    return parseCSV(text); // parseCSV auto-detects tabs
+    return parseCSV(text);
   }
 
-  // Check for consistent delimiter (semicolons, commas in .txt)
+  // Check for consistent delimiter
   const delimiter = detectDelimiter(lines[0]);
   const firstLineParts = splitLine(lines[0], delimiter);
   if (firstLineParts.length >= 2) {
-    // Verify consistency: at least 50% of lines have same number of columns
     const consistentLines = lines.filter(l => splitLine(l, delimiter).length === firstLineParts.length);
     if (consistentLines.length >= lines.length * 0.5) {
       const headers = firstLineParts;
@@ -212,7 +234,6 @@ export function parseFileContent(content: string, fileName: string): string {
   if (ext === "json") {
     try {
       const parsed = JSON.parse(content);
-      // If it's an array of objects, convert to headers/rows format
       if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "object") {
         const headers = Object.keys(parsed[0]);
         const rows = parsed.slice(0, 200).map(item => {

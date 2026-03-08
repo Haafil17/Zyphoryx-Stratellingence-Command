@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { parseFileContent, parseCSV } from "@/lib/analytics-ai";
+import { parseFileContent, parseCSV, parseExcel } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
 
 const COLORS = ["hsl(187,85%,53%)", "hsl(152,69%,45%)", "hsl(42,92%,56%)", "hsl(280,65%,60%)", "hsl(340,75%,55%)"];
@@ -158,12 +158,31 @@ const Dashboard = () => {
     for (const file of files) {
       const ext = file.name.split(".").pop()?.toLowerCase() || "";
       const isImage = ["jpeg", "jpg", "png", "gif", "webp", "svg"].includes(ext);
-      const isBinary = ["pdf", "xlsx", "xls"].includes(ext);
+      const isExcel = ["xlsx", "xls"].includes(ext);
 
       try {
-        if (isImage || isBinary) {
-          setUploadedFiles(prev => [...prev, { name: file.name, content: `[${isImage ? "Image" : "Binary"}: ${file.name}]`, category, type: ext }]);
+        if (isImage) {
+          setUploadedFiles(prev => [...prev, { name: file.name, content: `[Image: ${file.name}]`, category, type: ext }]);
           toast.success(`${file.name} uploaded`);
+          continue;
+        }
+
+        if (isExcel) {
+          const buffer = await file.arrayBuffer();
+          const content = parseExcel(buffer);
+          if (content) {
+            setUploadedFiles(prev => [...prev, { name: file.name, content, category, type: ext }]);
+            tryParseChartData(content, category);
+            toast.success(`${file.name} uploaded to ${category}`);
+          } else {
+            toast.error(`Could not parse ${file.name}`);
+          }
+          continue;
+        }
+
+        if (ext === "pdf") {
+          setUploadedFiles(prev => [...prev, { name: file.name, content: `[PDF: ${file.name} — PDF parsing not supported client-side]`, category, type: ext }]);
+          toast.info(`${file.name} uploaded (PDF content cannot be auto-parsed)`);
           continue;
         }
 

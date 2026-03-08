@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import AIChatPanel from "@/components/AIChatPanel";
 import DynamicChart, { ChartData } from "@/components/DynamicChart";
-import { parseFileContent } from "@/lib/analytics-ai";
+import { parseFileContent, parseExcel } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
 
 const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
@@ -70,11 +70,21 @@ const Analytics = () => {
     for (const file of files) {
       const ext = file.name.split(".").pop()?.toLowerCase() || "";
       const isImage = ["jpeg", "jpg", "png", "gif", "webp", "svg"].includes(ext);
-      const isBinary = ["pdf", "xlsx", "xls"].includes(ext);
+      const isExcel = ["xlsx", "xls"].includes(ext);
 
       try {
-        if (isImage || isBinary) {
-          parsed.push({ name: file.name, content: `[${isImage ? "Image" : "Binary"}: ${file.name}]`, type: ext });
+        if (isImage) {
+          parsed.push({ name: file.name, content: `[Image: ${file.name}]`, type: ext });
+        } else if (isExcel) {
+          const buffer = await file.arrayBuffer();
+          const content = parseExcel(buffer);
+          if (content) {
+            parsed.push({ name: file.name, content, type: ext });
+          } else {
+            toast.error(`Could not parse ${file.name}`);
+          }
+        } else if (ext === "pdf") {
+          parsed.push({ name: file.name, content: `[PDF: ${file.name}]`, type: ext });
         } else {
           const text = await file.text();
           const content = parseFileContent(text, file.name);
