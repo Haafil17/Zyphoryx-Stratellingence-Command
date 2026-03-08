@@ -196,7 +196,6 @@ const Dashboard = () => {
       }
     }
     setUploading(false);
-    if (e.target) e.target.value = "";
 
     if (category === "revenue" && !hasExpense) {
       toast.info("Please also upload your Expense data to see the full dashboard.");
