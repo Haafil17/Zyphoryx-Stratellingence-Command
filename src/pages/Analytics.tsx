@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Upload, FileText, BarChart3, TrendingUp,
   Sparkles, Table, BookOpen, X, Brain, Shuffle,
-  FileImage, FileSpreadsheet, Image
+  FileImage, FileSpreadsheet, Image, Download
 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -13,6 +13,8 @@ import DynamicChart, { ChartData } from "@/components/DynamicChart";
 import { parseFileContent, parseExcel } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
 import { useFileDrop } from "@/hooks/use-file-drop";
+import ExportButtons from "@/components/ExportButtons";
+import SavedAnalysesPanel from "@/components/SavedAnalysesPanel";
 
 const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
 
@@ -176,13 +178,24 @@ const Analytics = () => {
     <div className="neural-bg min-h-screen">
       <div className="container py-10 max-w-7xl">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-black flex items-center gap-3 tracking-tight leading-tight text-foreground">
-            <BarChart3 className="h-9 w-9 text-primary" />
-            Data Analytics & <span className="gradient-text">AI Intelligence</span>
-          </h1>
-          <p className="text-base text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-            Upload your data and AI will <strong className="text-foreground">automatically analyze</strong> it — generating charts, stories, forecasts, and strategic insights instantly.
-          </p>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black flex items-center gap-3 tracking-tight leading-tight text-foreground">
+                <BarChart3 className="h-9 w-9 text-primary" />
+                Data Analytics & <span className="gradient-text">AI Intelligence</span>
+              </h1>
+              <p className="text-base text-muted-foreground mt-3 max-w-2xl leading-relaxed">
+                Upload your data and our AI will <strong className="text-foreground">automatically analyze</strong> it — generating interactive charts, data stories, predictive forecasts, and strategic recommendations in real time.
+              </p>
+            </div>
+            {tableData && (
+              <ExportButtons
+                data={tableData.rows}
+                headers={tableData.headers}
+                filename="analytics-data"
+              />
+            )}
+          </div>
         </motion.div>
 
         {/* Upload Zone */}
@@ -377,8 +390,8 @@ const Analytics = () => {
             )}
           </div>
 
-          {/* Right: AI Chat */}
-          <div>
+          {/* Right: AI Chat + Saved */}
+          <div className="space-y-4">
             <AIChatPanel
               ref={chatRef}
               fileData={fileData}
@@ -387,6 +400,22 @@ const Analytics = () => {
               onForecastGenerated={handleForecastGenerated}
               onSimulationGenerated={handleSimulationGenerated}
               onCofounderGenerated={handleCofounderGenerated}
+            />
+            <SavedAnalysesPanel
+              fileNames={uploadedFiles.map(f => f.name)}
+              charts={aiCharts}
+              story={aiStory}
+              forecast={aiForecast}
+              simulation={aiSimulation}
+              cofounder={aiCofounder}
+              onLoad={(analysis) => {
+                setAiCharts(analysis.charts);
+                setAiStory(analysis.story);
+                setAiForecast(analysis.forecast);
+                setAiSimulation(analysis.simulation);
+                setAiCofounder(analysis.cofounder);
+                setActiveTab("charts");
+              }}
             />
           </div>
         </div>

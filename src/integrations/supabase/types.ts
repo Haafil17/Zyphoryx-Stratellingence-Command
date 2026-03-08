@@ -38,6 +38,45 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_analyses: {
+        Row: {
+          charts: Json | null
+          cofounder: string | null
+          created_at: string
+          file_names: string[]
+          forecast: string | null
+          id: string
+          simulation: string | null
+          story: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          charts?: Json | null
+          cofounder?: string | null
+          created_at?: string
+          file_names?: string[]
+          forecast?: string | null
+          id?: string
+          simulation?: string | null
+          story?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          charts?: Json | null
+          cofounder?: string | null
+          created_at?: string
+          file_names?: string[]
+          forecast?: string | null
+          id?: string
+          simulation?: string | null
+          story?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

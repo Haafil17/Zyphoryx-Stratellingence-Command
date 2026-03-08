@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { parseFileContent, parseCSV, parseExcel } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
 import { useFileDrop } from "@/hooks/use-file-drop";
+import ExportButtons from "@/components/ExportButtons";
 
 const COLORS = ["hsl(187,85%,53%)", "hsl(152,69%,45%)", "hsl(42,92%,56%)", "hsl(280,65%,60%)", "hsl(340,75%,55%)"];
 const tooltipStyle = { background: "hsl(222,22%,9%)", border: "1px solid hsl(222,15%,18%)", borderRadius: 8, fontSize: 12 };
@@ -242,13 +243,24 @@ const Dashboard = () => {
     <div className="neural-bg min-h-screen">
       <div className="container py-10 max-w-7xl">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-10">
-          <h1 className="text-4xl md:text-5xl font-black flex items-center gap-3 tracking-tight leading-tight">
-            <Brain className="h-9 w-9 text-primary" />
-            Executive <span className="gradient-text">Command Center</span>
-          </h1>
-          <p className="text-base text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-            Upload your data file and the dashboard will <strong className="text-foreground">automatically detect</strong> revenue, expenses, and other metrics to generate KPIs, charts, and insights.
-          </p>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black flex items-center gap-3 tracking-tight leading-tight">
+                <Brain className="h-9 w-9 text-primary" />
+                Executive <span className="gradient-text">Command Center</span>
+              </h1>
+              <p className="text-base text-muted-foreground mt-3 max-w-2xl leading-relaxed">
+                Upload your business data and the dashboard will <strong className="text-foreground">auto-detect</strong> revenue, expenses, and key metrics — generating KPIs, interactive charts, and strategic insights instantly.
+              </p>
+            </div>
+            {hasData && (
+              <ExportButtons
+                data={revenueData.map((r, i) => ({ ...r, expense: expenseData[i]?.expense ?? 0 }))}
+                headers={["month", "revenue", "expense", "forecast"]}
+                filename="dashboard-data"
+              />
+            )}
+          </div>
         </motion.div>
 
         {/* Single Upload Zone */}
