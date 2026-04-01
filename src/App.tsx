@@ -8,14 +8,13 @@ import { FileStoreProvider } from "@/contexts/FileStoreContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
-import ProblemSolution from "./pages/ProblemSolution";
 import Features from "./pages/Features";
-import Platform from "./pages/Platform";
 import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,18 +30,13 @@ const App = () => (
             <Layout>
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/problem" element={<ProblemSolution />} />
-                <Route path="/solution" element={<ProblemSolution />} />
                 <Route path="/features" element={<Features />} />
-                <Route path="/how-it-works" element={<Platform />} />
-                <Route path="/industries" element={<Platform />} />
-                <Route path="/security" element={<Platform />} />
-                <Route path="/platform" element={<Platform />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>
