@@ -29,8 +29,15 @@ const Login = () => {
         toast.success("Account created! Check your email to verify, then sign in.");
         setIsSignup(false);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error, data } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // Check if user is blocked
+        const { data: profile } = await supabase.from("profiles").select("blocked").eq("user_id", data.user.id).single();
+        if (profile?.blocked) {
+          await supabase.auth.signOut();
+          toast.error("Your account has been blocked. Contact an administrator.");
+          return;
+        }
         toast.success("Welcome back!");
         navigate("/dashboard");
       }

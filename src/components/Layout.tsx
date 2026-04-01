@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut, User } from "lucide-react";
+import { Menu, X, LogOut, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import logo from "@/assets/logo.png";
@@ -9,9 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const navLinks = [
   { to: "/", label: "Home" },
-  { to: "/problem", label: "Problem & Solution" },
   { to: "/features", label: "Features" },
-  { to: "/platform", label: "Platform" },
   { to: "/dashboard", label: "Dashboard", highlight: true },
   { to: "/analytics", label: "Analytics", highlight: true },
   { to: "/contact", label: "Contact" },
@@ -20,16 +18,28 @@ const navLinks = [
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        const { data } = await supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" });
+        setIsAdmin(!!data);
+      }
+    };
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" }).then(({ data }) => setIsAdmin(!!data));
+      } else {
+        setIsAdmin(false);
+      }
     });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
+    checkAuth();
     return () => subscription.unsubscribe();
   }, []);
 
@@ -66,6 +76,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 {link.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className={`px-3 py-1.5 text-sm font-bold rounded-md transition-colors flex items-center gap-1 ${
+                  location.pathname === "/admin" ? "text-primary bg-primary/10" : "text-accent hover:text-accent hover:bg-accent/10"
+                }`}
+              >
+                <Shield className="h-3.5 w-3.5" /> Admin
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-2">
@@ -93,42 +113,28 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 Request Demo
               </Button>
             </Link>
-            <button
-              className="lg:hidden text-muted-foreground"
-              onClick={() => setMobileOpen(!mobileOpen)}
-            >
+            <button className="lg:hidden text-muted-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
 
         {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl"
-          >
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl">
             <nav className="container py-4 flex flex-col gap-1">
               {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setMobileOpen(false)}
-                  className={`px-3 py-2.5 text-sm font-bold rounded-md ${
-                    location.pathname === link.to
-                      ? "text-primary bg-primary/10"
-                      : link.highlight
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                >
+                <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)}
+                  className={`px-3 py-2.5 text-sm font-bold rounded-md ${location.pathname === link.to ? "text-primary bg-primary/10" : link.highlight ? "text-primary" : "text-muted-foreground"}`}>
                   {link.label}
                 </Link>
               ))}
+              {isAdmin && (
+                <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-3 py-2.5 text-sm font-bold rounded-md text-accent flex items-center gap-1">
+                  <Shield className="h-3.5 w-3.5" /> Admin
+                </Link>
+              )}
               {user && (
-                <button onClick={handleSignOut} className="px-3 py-2.5 text-sm font-bold text-muted-foreground text-left">
-                  Sign Out
-                </button>
+                <button onClick={handleSignOut} className="px-3 py-2.5 text-sm font-bold text-muted-foreground text-left">Sign Out</button>
               )}
             </nav>
           </motion.div>
@@ -143,12 +149,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <img src={logo} alt="Zephoryx AI Lab" className="h-6 w-6 rounded-md object-cover" />
             <span className="font-black text-lg gradient-text">Zephoryx AI</span>
           </div>
-          <p className="text-sm text-muted-foreground font-bold">
-            Strategic Intelligence & Decision Ecosystem
-          </p>
-          <p className="text-xs text-muted-foreground mt-3">
-            © {new Date().getFullYear()} Zephoryx AI Lab. All rights reserved.
-          </p>
+          <p className="text-sm text-muted-foreground font-bold">Strategic Intelligence & Decision Ecosystem</p>
+          <p className="text-xs text-muted-foreground mt-3">© {new Date().getFullYear()} Zephoryx AI Lab. All rights reserved.</p>
         </div>
       </footer>
     </div>
