@@ -6,40 +6,76 @@ import {
   MessageSquare, Users, Zap, ArrowRight, Sparkles, BookOpen,
   AlertTriangle, Database, Clock, Eye, TrendingDown, Check, Shield, Rocket, Target,
   Cpu, Monitor, Landmark, ShoppingCart, Factory, Building2, Truck, HeartPulse,
-  Lock, Server, FileCheck, Globe, Key
+  Lock, Server, FileCheck, Globe, Key, X
 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
+/* ── Section 1: What It Does (Features) ── */
 const features = [
-  { icon: Sparkles, title: "AI-Powered Data Intelligence", desc: "Upload company data and watch it transform into actionable insights, interactive visualizations, and board-ready strategic reports in seconds." },
-  { icon: BookOpen, title: "Data Storytelling Engine", desc: "Turn complex datasets into compelling narratives with auto-generated charts, trend explanations, and executive summaries anyone can understand." },
-  { icon: TrendingUp, title: "Predictive Business Forecasting", desc: "Leverage pattern recognition and ML models to forecast revenue, identify emerging risks, and project growth trajectories with confidence scoring." },
-  { icon: MessageSquare, title: "AI Decision Assistant", desc: "Ask natural-language questions about your business and receive data-backed recommendations with full reasoning transparency." },
-  { icon: Brain, title: "Strategy Co-Founder AI", desc: "Your always-on virtual advisor — surfacing growth levers, competitive threats, cost optimization opportunities, and strategic pivots." },
-  { icon: BarChart3, title: "Unified Analytics Platform", desc: "Spreadsheets, documents, charts, forecasts, simulations, and recommendations — consolidated into one powerful command center." },
-  { icon: Users, title: "Enterprise-Ready Architecture", desc: "Purpose-built for organizations that demand speed, accuracy, and data-driven decision-making at every level of leadership." },
-  { icon: Shuffle, title: "Scenario Simulation Engine", desc: "Model pricing changes, budget reallocations, market expansions, and strategic pivots with projected outcomes before committing resources." },
+  { icon: BarChart3, title: "Instant Data Analysis", desc: "Upload Excel, CSV, or financial data. Zephoryx auto-cleans, structures, and analyzes it — no formulas, no pivot tables, no analyst required." },
+  { icon: BookOpen, title: "Data Storytelling", desc: "Numbers don't convince — stories do. Zephoryx turns raw data into clear, executive-ready narratives with auto-generated charts and trend explanations." },
+  { icon: Brain, title: "AI Co-Founder", desc: "A strategic advisor that never sleeps. It spots growth levers, flags risks, recommends cost cuts, and suggests pivots — like having a co-founder who's seen a thousand businesses." },
+  { icon: Shuffle, title: "Scenario Simulation", desc: "Ask 'What if we raise prices 15%?' or 'What happens if we enter a new market?' Zephoryx models the outcomes before you commit a single dollar." },
+  { icon: TrendingUp, title: "Predictive Forecasting", desc: "ML-powered revenue forecasts, risk projections, and growth trajectories — each with confidence scores so you know exactly how reliable the prediction is." },
+  { icon: MessageSquare, title: "AI Decision Assistant", desc: "Ask plain-English questions about your business. Get data-backed answers with full reasoning — not generic advice, but insights drawn from your actual numbers." },
+  { icon: Sparkles, title: "Visual Intelligence", desc: "Interactive charts, trend lines, heatmaps, and KPI dashboards generated automatically. See your business at a glance, not through a spreadsheet." },
+  { icon: Users, title: "Built for Founders & Leaders", desc: "Designed for decision-makers, not data scientists. No SQL, no code, no training required. Upload data, get strategy." },
 ];
 
+/* ── Section 3: Problem ── */
 const problems = [
-  { icon: Database, title: "Data Overload", desc: "Teams drown in disconnected spreadsheets and dashboards. Critical insights stay buried under noise, costing millions in missed opportunities." },
-  { icon: Clock, title: "Reactive Decision-Making", desc: "By the time a problem surfaces, it has already eroded margins. Leaders react instead of anticipate — always one step behind." },
-  { icon: Eye, title: "Strategic Blindness", desc: "Market shifts, competitive threats, and internal risks remain invisible until impact. No early-warning system exists." },
-  { icon: TrendingDown, title: "Fragmented Analytics", desc: "Finance, marketing, and operations each use different tools. No unified intelligence layer. No single source of truth." },
+  { icon: Database, title: "Drowning in Data, Starving for Insight", desc: "Your teams juggle dozens of spreadsheets, dashboards, and reports that don't talk to each other. The answers are in the data — but nobody can find them." },
+  { icon: Clock, title: "Decisions Come Too Late", desc: "By the time you spot a problem, it has already cost you. Leaders react instead of anticipate — always one quarter behind." },
+  { icon: Eye, title: "No Strategic Visibility", desc: "Market shifts, competitive threats, and internal risks stay invisible until they hit your bottom line. There's no early-warning system." },
+  { icon: TrendingDown, title: "Tools That Show, but Don't Tell", desc: "Dashboards show charts. But they don't tell you what to do. You still need an analyst to interpret, a strategist to decide, and a week to act." },
 ];
 
+/* ── Section 4: Solution ── */
 const solutions = [
-  { icon: Target, title: "Unified Intelligence Layer", desc: "Zephoryx consolidates every data source into a single, AI-powered intelligence platform — eliminating silos permanently.", points: ["Multi-source data integration", "Automatic cleaning & structuring", "Single source of truth across departments"] },
-  { icon: Shield, title: "Predictive Clarity", desc: "Detect threats before they materialize. Continuous AI scanning identifies anomalies, quantifies risks, and surfaces opportunities.", points: ["Real-time anomaly detection", "Risk probability scoring with confidence levels", "Automated early warning alerts"] },
-  { icon: Rocket, title: "Strategic Acceleration", desc: "Stop guessing. Simulate strategies, model outcomes, and execute with data-backed confidence at every decision point.", points: ["What-if scenario simulation engine", "Growth projection modeling", "AI-powered strategic recommendations"] },
+  { icon: Target, title: "One Source of Truth", desc: "Zephoryx consolidates every data source into a single AI-powered intelligence layer — no more silos, no more conflicting numbers.", points: ["Multi-source data integration in minutes", "Automatic cleaning, structuring & validation", "Every department sees the same numbers"] },
+  { icon: Shield, title: "See Threats Before They Arrive", desc: "Continuous AI scanning detects anomalies, quantifies risks, and surfaces opportunities — so you act before your competitors even notice.", points: ["Real-time anomaly & outlier detection", "Risk scoring with confidence levels", "Automated alerts for critical changes"] },
+  { icon: Rocket, title: "From Data to Decision in Seconds", desc: "Stop guessing. Simulate strategies, model outcomes, and execute with data-backed confidence — all in one conversation with your AI co-founder.", points: ["What-if scenario modeling", "Revenue & growth projections", "AI-generated strategic recommendations"] },
 ];
 
+/* ── Section 6: Differentiation — Why Not Existing Tools ── */
+const comparisonTraditional = [
+  "Show dashboards — you still interpret them yourself",
+  "Require trained analysts to set up and maintain",
+  "No strategic recommendations or decision support",
+  "Separate tools for charts, forecasts, and reports",
+];
+
+const comparisonZephoryx = [
+  "Explains insights in plain English — no interpretation needed",
+  "Works for non-technical founders and executives",
+  "Gives actionable strategy, not just visualizations",
+  "Analysis + storytelling + forecasting + simulation in one platform",
+];
+
+/* ── Section 7: Why Not ChatGPT ── */
+const chatgptLimitations = [
+  "Needs carefully crafted prompts to get useful output",
+  "Quality depends entirely on user skill",
+  "No persistent data context or memory across sessions",
+  "Cannot generate real charts, forecasts, or simulations",
+  "Generic advice — not grounded in your actual business data",
+];
+
+const zephoryxAdvantages = [
+  "Auto-analyzes your data the moment you upload it",
+  "Generates structured reports, charts & forecasts automatically",
+  "Remembers your business context across every session",
+  "Runs real simulations with projected financial outcomes",
+  "Every recommendation is backed by your actual numbers",
+];
+
+/* ── Platform Architecture ── */
 const layers = [
-  { icon: Database, title: "Data Integration Layer", desc: "Connect all your data sources — financial, operational, sales, HR, and market data. Fully automated ingestion and structuring pipeline." },
-  { icon: Cpu, title: "Intelligence Processing", desc: "AI cleans, normalizes, and analyzes data in real time. Pattern detection, anomaly identification, and statistical modeling at scale." },
-  { icon: TrendingUp, title: "Prediction Engine", desc: "Machine learning models forecast trends, estimate risks, and project growth trajectories with confidence scoring." },
-  { icon: Brain, title: "Strategic Engine", desc: "Scenario simulation, what-if modeling, strategic recommendations, and co-founder advisory intelligence for leadership teams." },
-  { icon: Monitor, title: "Executive Interface", desc: "Premium command center with real-time KPIs, interactive visualizations, strategic alerts, and natural language queries." },
+  { icon: Database, title: "Data Integration", desc: "Connect financials, operations, sales, HR, and market data. Automated ingestion — no manual formatting." },
+  { icon: Cpu, title: "Intelligence Engine", desc: "AI cleans, normalizes, and cross-references your data. Detects patterns and anomalies humans miss." },
+  { icon: TrendingUp, title: "Prediction Layer", desc: "ML models forecast trends, estimate risks, and project growth — each with a confidence score." },
+  { icon: Brain, title: "Strategy Layer", desc: "Scenario simulation, what-if modeling, and co-founder-grade strategic recommendations." },
+  { icon: Monitor, title: "Executive Interface", desc: "Real-time KPIs, interactive charts, strategic alerts, and a natural-language query bar. Your command center." },
 ];
 
 const industries = [
@@ -52,12 +88,12 @@ const industries = [
 ];
 
 const securityItems = [
-  { icon: Lock, title: "Enterprise Encryption", desc: "AES-256 at rest, TLS 1.3 in transit. Data protected at every layer." },
-  { icon: Server, title: "Cloud & On-Premise", desc: "Deploy anywhere with zero compromise on performance or security." },
+  { icon: Lock, title: "Enterprise Encryption", desc: "AES-256 at rest, TLS 1.3 in transit. Protected at every layer." },
+  { icon: Server, title: "Cloud & On-Premise", desc: "Deploy anywhere — zero compromise on performance or security." },
   { icon: FileCheck, title: "Compliance Ready", desc: "SOC 2, GDPR, HIPAA compliant. Built for regulated industries." },
   { icon: Globe, title: "Data Residency", desc: "Multi-region support with full data sovereignty control." },
   { icon: Key, title: "Access Control", desc: "Role-based access, SSO, MFA, and comprehensive audit logging." },
-  { icon: Shield, title: "Zero Trust Architecture", desc: "Every request verified, every action logged. Defense in depth." },
+  { icon: Shield, title: "Zero Trust", desc: "Every request verified, every action logged. Defense in depth." },
 ];
 
 const fadeUp = {
@@ -65,17 +101,10 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.5 } }),
 };
 
-const stats = [
-  { value: "10x", label: "Faster Insights" },
-  { value: "95%", label: "Accuracy Rate" },
-  { value: "500+", label: "Data Sources" },
-  { value: "24/7", label: "AI Availability" },
-];
-
 const Index = () => {
   return (
     <div>
-      {/* Hero */}
+      {/* ═══ HERO — What It Is ═══ */}
       <section className="relative min-h-[92vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img src={heroBg} alt="" className="w-full h-full object-cover opacity-20 dark:opacity-20" />
@@ -85,15 +114,18 @@ const Index = () => {
         <div className="container relative z-10 py-24">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm font-semibold mb-8">
-              <Brain className="h-4 w-4" /> Strategic Intelligence Platform
+              <Brain className="h-4 w-4" /> Your AI Strategic Co-Founder
             </div>
             <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.02] mb-8 tracking-tight">
-              <span className="gradient-text">Zephoryx AI</span><br />
-              <span className="text-foreground">Strategic</span><br />
-              <span className="text-foreground">Decision Engine</span>
+              <span className="gradient-text">Upload Data.</span><br />
+              <span className="text-foreground">Get Decisions,</span><br />
+              <span className="text-foreground">Not Dashboards.</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-xl mb-10 leading-relaxed">
-              Transform raw business data into strategic firepower. Predict outcomes, simulate scenarios, and lead with intelligence that thinks like a co-founder.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-xl mb-6 leading-relaxed">
+              Zephoryx Stratelligence is an AI-powered platform that analyzes your business data, tells the story behind the numbers, and acts like a strategic co-founder — guiding every decision with intelligence, not guesswork.
+            </p>
+            <p className="text-base text-primary font-semibold mb-10 italic">
+              "We don't just analyze your data — we tell you exactly what to do next."
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/contact">
@@ -103,7 +135,7 @@ const Index = () => {
               </Link>
               <Link to="/dashboard">
                 <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-secondary px-10 py-6 text-base font-bold">
-                  Launch Platform
+                  Try the Platform
                 </Button>
               </Link>
             </div>
@@ -111,32 +143,43 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-16 border-y border-border/30">
+      {/* ═══ SECTION 2: What It Does ═══ */}
+      <section className="py-24 border-t border-border/30">
         <div className="container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((s, i) => (
-              <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="text-center">
-                <div className="text-4xl md:text-5xl font-black gradient-text mb-2">{s.value}</div>
-                <div className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">{s.label}</div>
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-black mb-5 tracking-tight">
+              What <span className="gradient-text">Zephoryx</span> Actually Does
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed text-lg font-medium">
+              One platform that replaces your analyst, your BI tool, and your strategy consultant.
+            </p>
+          </motion.div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {features.map((f, i) => (
+              <motion.div key={f.title} custom={i} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="glass-card p-7 hover:glow-border transition-all duration-300 group">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
+                  <f.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-extrabold text-base mb-3 text-foreground">{f.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Problem Section */}
-      <section className="py-24">
+      {/* ═══ SECTION 3: The Problem ═══ */}
+      <section className="py-24 border-t border-border/30">
         <div className="container max-w-5xl">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-destructive/30 bg-destructive/5 text-destructive text-sm font-medium mb-6">
-              <AlertTriangle className="h-4 w-4" /> The Enterprise Crisis
+              <AlertTriangle className="h-4 w-4" /> The Real Problem
             </div>
             <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight">
-              Your Data Is <span className="text-destructive">Failing</span> You
+              You Have Data. You Don't Have <span className="text-destructive">Answers.</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              In today's hyper-competitive landscape, enterprises that cannot predict, simulate, and act on real-time intelligence are already losing ground.
+              Businesses collect more data than ever — but most still make decisions based on gut feeling. The data exists. The clarity doesn't.
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 gap-5">
@@ -150,10 +193,16 @@ const Index = () => {
               </motion.div>
             ))}
           </div>
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mt-12 text-center">
+            <p className="text-xl font-bold text-muted-foreground">
+              Hiring analysts is expensive. Waiting for reports is slow.<br />
+              <span className="gradient-text font-black">You need a faster way to go from data to decision.</span>
+            </p>
+          </motion.div>
         </div>
       </section>
 
-      {/* Solution Section */}
+      {/* ═══ SECTION 4: The Solution ═══ */}
       <section className="py-20 border-t border-border/30">
         <div className="container max-w-5xl">
           <div className="flex items-center gap-4 mb-16">
@@ -161,15 +210,15 @@ const Index = () => {
             <span className="text-sm font-bold gradient-text px-4">THE SOLUTION</span>
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
           </div>
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-6">
             <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight">
-              The <span className="gradient-text">Zephoryx</span> Advantage
+              Raw Data → Insights → Story → Strategy → <span className="gradient-text">Action</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              One platform that transforms chaos into clarity, uncertainty into strategy, and data into decisive action.
+              Zephoryx removes the confusion. Upload your data. Get clear, actionable decisions — instantly. No analysts. No waiting. No guesswork.
             </p>
           </motion.div>
-          <div className="space-y-6">
+          <div className="space-y-6 mt-12">
             {solutions.map((s, i) => (
               <motion.div key={s.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="glass-card glow-border p-8">
                 <div className="flex items-start gap-4 mb-4">
@@ -193,32 +242,125 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="py-24 border-t border-border/30">
-        <div className="container">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-black mb-5 tracking-tight">
-              One Platform. <span className="gradient-text">Total Intelligence.</span>
+      {/* ═══ SECTION 5: USP ═══ */}
+      <section className="py-20 border-t border-border/30">
+        <div className="container max-w-4xl">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="glass-card glow-border p-12 md:p-16 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm font-semibold mb-8">
+              <Zap className="h-4 w-4" /> What Makes Us Different
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight">
+              Analysis + Storytelling + Strategy + Simulation<br />
+              <span className="gradient-text">In One Platform.</span>
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed text-lg font-medium">
-              Everything your leadership team needs to dominate data-driven strategy — powered by AI that deeply understands your business context.
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
+              Other tools show you charts. Zephoryx tells you what the charts mean, what's about to change, and what you should do about it — like a co-founder who's always three steps ahead.
             </p>
-          </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {features.map((f, i) => (
-              <motion.div key={f.title} custom={i} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="glass-card p-7 hover:glow-border transition-all duration-300 group">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
-                  <f.icon className="h-6 w-6 text-primary" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
+              {[
+                { label: "Data to Decisions", value: "Seconds" },
+                { label: "Accuracy Rate", value: "95%+" },
+                { label: "Setup Required", value: "Zero" },
+                { label: "AI Availability", value: "24/7" },
+              ].map((s) => (
+                <div key={s.label} className="text-center">
+                  <div className="text-3xl md:text-4xl font-black gradient-text mb-1">{s.value}</div>
+                  <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">{s.label}</div>
                 </div>
-                <h3 className="font-extrabold text-base mb-3 text-foreground">{f.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </motion.div>
-            ))}
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══ SECTION 6: Differentiation — vs Traditional Tools ═══ */}
+      <section className="py-20 border-t border-border/30">
+        <div className="container max-w-5xl">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight">
+              Power BI & Tableau Show Dashboards.<br />
+              <span className="gradient-text">Zephoryx Makes Decisions.</span>
+            </h2>
+          </motion.div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card p-8">
+              <h3 className="text-lg font-bold mb-4 text-destructive flex items-center gap-2">
+                <X className="h-5 w-5" /> Traditional BI Tools
+              </h3>
+              <div className="space-y-3">
+                {comparisonTraditional.map((item) => (
+                  <div key={item} className="flex items-start gap-2 text-sm">
+                    <X className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card glow-border p-8">
+              <h3 className="text-lg font-bold mb-4 text-primary flex items-center gap-2">
+                <Check className="h-5 w-5" /> Zephoryx Stratelligence
+              </h3>
+              <div className="space-y-3">
+                {comparisonZephoryx.map((item) => (
+                  <div key={item} className="flex items-start gap-2 text-sm">
+                    <Check className="h-4 w-4 text-success shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* How It Works - Platform Layers */}
+      {/* ═══ SECTION 7: Why Not ChatGPT ═══ */}
+      <section className="py-20 border-t border-border/30">
+        <div className="container max-w-5xl">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight">
+              "Why Not Just Use <span className="text-destructive">ChatGPT</span>?"
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Fair question. Here's the honest answer.
+            </p>
+          </motion.div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card p-8">
+              <h3 className="text-lg font-bold mb-4 text-destructive flex items-center gap-2">
+                <X className="h-5 w-5" /> ChatGPT
+              </h3>
+              <div className="space-y-3">
+                {chatgptLimitations.map((item) => (
+                  <div key={item} className="flex items-start gap-2 text-sm">
+                    <X className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="glass-card glow-border p-8">
+              <h3 className="text-lg font-bold mb-4 text-primary flex items-center gap-2">
+                <Check className="h-5 w-5" /> Zephoryx
+              </h3>
+              <div className="space-y-3">
+                {zephoryxAdvantages.map((item) => (
+                  <div key={item} className="flex items-start gap-2 text-sm">
+                    <Check className="h-4 w-4 text-success shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mt-10 text-center">
+            <p className="text-lg font-bold text-muted-foreground">
+              ChatGPT answers questions. <span className="gradient-text font-black">Zephoryx tells you what matters — without you asking.</span>
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══ How It Works — Platform Architecture ═══ */}
       <section className="py-20 border-t border-border/30">
         <div className="container max-w-4xl">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
@@ -226,7 +368,7 @@ const Index = () => {
               How <span className="gradient-text">Zephoryx</span> Works
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              Five intelligent layers working in harmony to deliver strategic intelligence at enterprise scale.
+              Five intelligent layers working together — from raw data to strategic action.
             </p>
           </motion.div>
           <div className="relative">
@@ -247,7 +389,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Industries */}
+      {/* ═══ Industries ═══ */}
       <section className="py-20 border-t border-border/30">
         <div className="container max-w-5xl">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
@@ -255,7 +397,7 @@ const Index = () => {
               Built for <span className="gradient-text">Every Industry</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              Zephoryx adapts to your domain with industry-specific intelligence models and workflows.
+              Zephoryx adapts to your domain with industry-specific intelligence models.
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -270,7 +412,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Security */}
+      {/* ═══ Security ═══ */}
       <section className="py-20 border-t border-border/30">
         <div className="container max-w-5xl">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
@@ -278,7 +420,7 @@ const Index = () => {
               Enterprise-Grade <span className="gradient-text">Security</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              Your data deserves military-grade protection. Zephoryx delivers it across every layer.
+              Your data is your competitive advantage. We protect it like it's ours.
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -293,15 +435,17 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ═══ SECTION 8: Final Positioning — CTA ═══ */}
       <section className="py-24">
         <div className="container">
           <div className="glass-card glow-border p-16 text-center">
+            <p className="text-sm font-bold text-primary uppercase tracking-wider mb-4">Your AI Strategic Co-Founder</p>
             <h2 className="text-3xl md:text-5xl font-black mb-5 tracking-tight">
-              Ready to <span className="gradient-text">Transform</span> Your Strategy?
+              Upload Your Data.<br />
+              <span className="gradient-text">Get Decisions, Not Dashboards.</span>
             </h2>
             <p className="text-muted-foreground mb-10 max-w-lg mx-auto leading-relaxed text-lg font-medium">
-              Join forward-thinking enterprises already using Zephoryx AI to outthink, outperform, and outlast the competition.
+              Stop drowning in spreadsheets. Start leading with intelligence. Zephoryx turns your data into your unfair advantage.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link to="/contact">
@@ -309,9 +453,9 @@ const Index = () => {
                   Get Started <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/analytics">
+              <Link to="/dashboard">
                 <Button size="lg" variant="outline" className="border-border font-bold px-12 py-6 text-base">
-                  Explore Analytics
+                  Try the Platform
                 </Button>
               </Link>
             </div>
