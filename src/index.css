@@ -15,7 +15,7 @@
     --popover: 210 20% 96%;
     --popover-foreground: 222 25% 14%;
 
-    --primary: 187 85% 40%;
+    --primary: 220 75% 50%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 18% 92%;
@@ -24,7 +24,7 @@
     --muted: 210 14% 90%;
     --muted-foreground: 215 15% 42%;
 
-    --accent: 42 92% 48%;
+    --accent: 280 65% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -32,87 +32,99 @@
 
     --border: 210 14% 86%;
     --input: 210 14% 86%;
-    --ring: 187 85% 40%;
+    --ring: 220 75% 50%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 210 20% 96%;
     --sidebar-foreground: 222 20% 15%;
-    --sidebar-primary: 187 85% 40%;
+    --sidebar-primary: 220 75% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 18% 92%;
     --sidebar-accent-foreground: 222 20% 15%;
     --sidebar-border: 210 14% 86%;
-    --sidebar-ring: 187 85% 40%;
+    --sidebar-ring: 220 75% 50%;
 
     /* Custom Zephoryx tokens */
-    --glow-primary: 187 85% 40%;
-    --glow-accent: 42 92% 48%;
+    --glow-primary: 220 75% 50%;
+    --glow-accent: 280 65% 55%;
     --surface-glass: 210 20% 94%;
     --surface-elevated: 210 20% 95%;
     --success: 152 69% 35%;
     --success-foreground: 0 0% 100%;
-    --warning: 42 92% 48%;
+    --warning: 32 95% 50%;
     --warning-foreground: 0 0% 100%;
-    --chart-1: 187 85% 40%;
-    --chart-2: 152 69% 35%;
-    --chart-3: 42 92% 48%;
-    --chart-4: 280 65% 50%;
-    --chart-5: 340 75% 50%;
+    --info: 200 80% 50%;
+    --info-foreground: 0 0% 100%;
+    --pink: 340 75% 55%;
+    --pink-foreground: 0 0% 100%;
+    --orange: 25 95% 55%;
+    --orange-foreground: 0 0% 100%;
+    --chart-1: 220 75% 50%;
+    --chart-2: 280 65% 55%;
+    --chart-3: 25 95% 55%;
+    --chart-4: 340 75% 55%;
+    --chart-5: 152 69% 35%;
   }
 
   .dark {
-    --background: 222 25% 6%;
+    --background: 222 30% 5%;
     --foreground: 210 20% 98%;
 
-    --card: 222 22% 9%;
+    --card: 222 28% 8%;
     --card-foreground: 210 20% 98%;
 
-    --popover: 222 22% 9%;
+    --popover: 222 28% 8%;
     --popover-foreground: 210 20% 92%;
 
-    --primary: 187 85% 53%;
-    --primary-foreground: 222 25% 6%;
+    --primary: 220 80% 60%;
+    --primary-foreground: 222 30% 5%;
 
-    --secondary: 222 18% 14%;
+    --secondary: 222 22% 13%;
     --secondary-foreground: 210 20% 95%;
 
-    --muted: 222 15% 16%;
+    --muted: 222 18% 16%;
     --muted-foreground: 215 15% 72%;
 
-    --accent: 42 92% 56%;
-    --accent-foreground: 222 25% 6%;
+    --accent: 280 70% 65%;
+    --accent-foreground: 222 30% 5%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 20% 98%;
 
-    --border: 222 15% 18%;
-    --input: 222 15% 18%;
-    --ring: 187 85% 53%;
+    --border: 222 18% 16%;
+    --input: 222 18% 16%;
+    --ring: 220 80% 60%;
 
-    --sidebar-background: 222 22% 8%;
+    --sidebar-background: 222 28% 7%;
     --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 187 85% 53%;
-    --sidebar-primary-foreground: 222 25% 6%;
-    --sidebar-accent: 222 18% 14%;
+    --sidebar-primary: 220 80% 60%;
+    --sidebar-primary-foreground: 222 30% 5%;
+    --sidebar-accent: 222 22% 13%;
     --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 222 15% 18%;
-    --sidebar-ring: 187 85% 53%;
+    --sidebar-border: 222 18% 16%;
+    --sidebar-ring: 220 80% 60%;
 
     /* Custom Zephoryx tokens */
-    --glow-primary: 187 85% 53%;
-    --glow-accent: 42 92% 56%;
-    --surface-glass: 222 20% 12%;
-    --surface-elevated: 222 20% 11%;
+    --glow-primary: 220 80% 60%;
+    --glow-accent: 280 70% 65%;
+    --surface-glass: 222 25% 10%;
+    --surface-elevated: 222 25% 9%;
     --success: 152 69% 45%;
-    --success-foreground: 222 25% 6%;
-    --warning: 42 92% 56%;
-    --warning-foreground: 222 25% 6%;
-    --chart-1: 187 85% 53%;
-    --chart-2: 152 69% 45%;
-    --chart-3: 42 92% 56%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --success-foreground: 222 30% 5%;
+    --warning: 32 95% 56%;
+    --warning-foreground: 222 30% 5%;
+    --info: 200 80% 55%;
+    --info-foreground: 222 30% 5%;
+    --pink: 340 75% 60%;
+    --pink-foreground: 222 30% 5%;
+    --orange: 25 95% 58%;
+    --orange-foreground: 222 30% 5%;
+    --chart-1: 220 80% 60%;
+    --chart-2: 280 70% 65%;
+    --chart-3: 25 95% 58%;
+    --chart-4: 340 75% 60%;
+    --chart-5: 152 69% 45%;
   }
 }
 
@@ -161,19 +173,19 @@
   }
 
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(187 85% 35%));
-  }
-
-  .dark .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(187 85% 40%));
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
   }
 
   .gradient-accent {
-    background: linear-gradient(135deg, hsl(var(--accent)), hsl(42 92% 40%));
+    background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--pink)));
   }
 
-  .dark .gradient-accent {
-    background: linear-gradient(135deg, hsl(var(--accent)), hsl(42 92% 45%));
+  .gradient-warm {
+    background: linear-gradient(135deg, hsl(var(--orange)), hsl(var(--pink)));
+  }
+
+  .gradient-cool {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--info)));
   }
 
   .grid-pattern {
@@ -186,14 +198,42 @@
   .neural-bg {
     background: 
       radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.08), transparent),
-      radial-gradient(ellipse 60% 40% at 80% 50%, hsl(var(--accent) / 0.03), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 50%, hsl(var(--accent) / 0.05), transparent),
+      radial-gradient(ellipse 40% 30% at 20% 80%, hsl(var(--pink) / 0.04), transparent),
       hsl(var(--background));
   }
 
   .dark .neural-bg {
     background: 
-      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.15), transparent),
-      radial-gradient(ellipse 60% 40% at 80% 50%, hsl(var(--accent) / 0.05), transparent),
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.18), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 50%, hsl(var(--accent) / 0.1), transparent),
+      radial-gradient(ellipse 40% 30% at 20% 80%, hsl(var(--pink) / 0.08), transparent),
+      radial-gradient(ellipse 50% 35% at 70% 90%, hsl(var(--orange) / 0.06), transparent),
       hsl(var(--background));
+  }
+
+  .kpi-card-blue {
+    background: linear-gradient(135deg, hsl(220 80% 60% / 0.15), hsl(220 80% 60% / 0.05));
+    border-color: hsl(220 80% 60% / 0.3);
+  }
+  .kpi-card-purple {
+    background: linear-gradient(135deg, hsl(280 70% 65% / 0.15), hsl(280 70% 65% / 0.05));
+    border-color: hsl(280 70% 65% / 0.3);
+  }
+  .kpi-card-pink {
+    background: linear-gradient(135deg, hsl(340 75% 60% / 0.15), hsl(340 75% 60% / 0.05));
+    border-color: hsl(340 75% 60% / 0.3);
+  }
+  .kpi-card-orange {
+    background: linear-gradient(135deg, hsl(25 95% 58% / 0.15), hsl(25 95% 58% / 0.05));
+    border-color: hsl(25 95% 58% / 0.3);
+  }
+  .kpi-card-green {
+    background: linear-gradient(135deg, hsl(152 69% 45% / 0.15), hsl(152 69% 45% / 0.05));
+    border-color: hsl(152 69% 45% / 0.3);
+  }
+  .kpi-card-cyan {
+    background: linear-gradient(135deg, hsl(200 80% 55% / 0.15), hsl(200 80% 55% / 0.05));
+    border-color: hsl(200 80% 55% / 0.3);
   }
 }
