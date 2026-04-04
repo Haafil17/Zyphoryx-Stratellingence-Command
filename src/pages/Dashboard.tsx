@@ -95,6 +95,12 @@ const Dashboard = () => {
   const maxRevenue = revenueData.length > 0 ? Math.max(...revenueData.map(d => d.revenue)) : 0;
   const maxExpense = expenseData.length > 0 ? Math.max(...expenseData.map(d => d.expense)) : 0;
 
+  const formatValue = (v: number) => {
+    if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+    if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
+    return v.toLocaleString();
+  };
+
   // Auto-detect insights from real data
   const autoInsights: { icon: typeof AlertCircle; color: string; bg: string; text: string }[] = [];
   if (hasData) {
