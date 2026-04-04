@@ -145,12 +145,6 @@ const Dashboard = () => {
     }
   }
 
-  const formatValue = (v: number) => {
-    if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
-    if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
-    return v.toLocaleString();
-  };
-
   const kpis = hasData ? [
     { label: "Total Revenue", value: formatValue(totalRevenue), icon: DollarSign, colorClass: "kpi-card-blue", iconColor: "text-[hsl(220,80%,60%)]", up: true },
     { label: "Total Expenses", value: formatValue(totalExpense), icon: TrendingDown, colorClass: "kpi-card-orange", iconColor: "text-[hsl(25,95%,58%)]", up: false },
