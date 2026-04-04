@@ -32,8 +32,7 @@ const quickQuestions = [
 ];
 
 /**
- * Parse sectioned AI response with markers like ## STORY, ## FORECAST, etc.
- * Falls back to routing by user input keywords.
+ * Parse sectioned AI response with markers like ## DATA STORY, ## FORECAST, etc.
  */
 function parseSections(fullText: string): {
   story: string;
@@ -44,7 +43,6 @@ function parseSections(fullText: string): {
 } {
   const result = { story: "", forecast: "", simulation: "", cofounder: "", general: "" };
 
-  // Try to extract sections by markers
   const sectionMap: Record<string, keyof typeof result> = {
     "DATA STORY": "story",
     "EXECUTIVE SUMMARY": "story",
@@ -52,6 +50,7 @@ function parseSections(fullText: string): {
     "STORY": "story",
     "FORECAST": "forecast",
     "PREDICTION": "forecast",
+    "PREDICTIVE": "forecast",
     "PROJECTION": "forecast",
     "SIMULATION": "simulation",
     "SCENARIO": "simulation",
@@ -62,9 +61,9 @@ function parseSections(fullText: string): {
     "GROWTH": "cofounder",
     "CO-FOUNDER": "cofounder",
     "RECOMMENDATION": "cofounder",
+    "DECISION": "cofounder",
   };
 
-  // Split by ## or # headings
   const lines = fullText.split("\n");
   let currentSection: keyof typeof result = "general";
   let currentContent: string[] = [];
@@ -132,17 +131,16 @@ const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData,
     if (!cleanText) return;
 
     const lower = userInput.toLowerCase();
-    const isComprehensive = lower.includes("analyze this data") || lower.includes("comprehensively");
+    const isComprehensive = lower.includes("analyze this data") || lower.includes("comprehensively") || lower.includes("analyze") && lower.includes("generate");
 
     if (isComprehensive) {
-      // Parse sections from the AI response
       const sections = parseSections(cleanText);
       if (sections.story && onStoryGenerated) onStoryGenerated(sections.story);
       if (sections.forecast && onForecastGenerated) onForecastGenerated(sections.forecast);
       if (sections.simulation && onSimulationGenerated) onSimulationGenerated(sections.simulation);
       if (sections.cofounder && onCofounderGenerated) onCofounderGenerated(sections.cofounder);
 
-      // If no sections were parsed, send everything to story as fallback
+      // Fallback: if no sections parsed, put everything in story
       if (!sections.story && !sections.forecast && !sections.simulation && !sections.cofounder) {
         if (onStoryGenerated) onStoryGenerated(cleanText);
       }
@@ -159,7 +157,7 @@ const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData,
     if ((lower.includes("what if") || lower.includes("what-if") || lower.includes("scenario") || lower.includes("simulation") || lower.includes("simulate")) && onSimulationGenerated) {
       onSimulationGenerated(cleanText);
     }
-    if ((lower.includes("strategy") || lower.includes("growth") || lower.includes("profit leak") || lower.includes("optimize") || lower.includes("co-founder") || lower.includes("cofounder") || lower.includes("advisor")) && onCofounderGenerated) {
+    if ((lower.includes("strategy") || lower.includes("growth") || lower.includes("profit leak") || lower.includes("optimize") || lower.includes("co-founder") || lower.includes("cofounder") || lower.includes("advisor") || lower.includes("decision") || lower.includes("recommend")) && onCofounderGenerated) {
       onCofounderGenerated(cleanText);
     }
   };
@@ -191,7 +189,7 @@ const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData,
       },
       onDone: () => {
         setIsLoading(false);
-        const { charts, text } = parseChartBlocks(assistantSoFar);
+        const { charts } = parseChartBlocks(assistantSoFar);
         if (charts.length > 0 && onChartsGenerated) {
           onChartsGenerated(charts);
         }

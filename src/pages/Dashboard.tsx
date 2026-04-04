@@ -11,7 +11,7 @@ import {
   BarChart3, FileSpreadsheet, FileImage, Image, AlertTriangle,
   Lightbulb, BookOpen, Shuffle, Table, Sparkles, Target,
   PieChart as PieChartIcon, Percent, ArrowUpRight, ArrowDownRight,
-  Layers, CircleDot
+  Layers, CircleDot, Eye, AlertCircle, Flame, Award
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -44,7 +44,7 @@ const TIPS = [
   { icon: Shield, color: "text-[hsl(152,69%,45%)]", bg: "kpi-card-green", text: "Export your analysis as CSV or JSON anytime. All insights are based strictly on your actual data." },
 ];
 
-type DashTabKey = "overview" | "story" | "forecast" | "simulation" | "table";
+type DashTabKey = "overview" | "story" | "forecast" | "simulation" | "cofounder" | "table";
 
 const Dashboard = () => {
   const { dashboardFiles: uploadedFiles, setDashboardFiles: setUploadedFiles, parsedChartData, setParsedChartData } = useFileStore();
@@ -59,6 +59,7 @@ const Dashboard = () => {
   const [aiStory, setAiStory] = useState("");
   const [aiForecast, setAiForecast] = useState("");
   const [aiSimulation, setAiSimulation] = useState("");
+  const [aiCofounder, setAiCofounder] = useState("");
 
   const { revenueData, expenseData } = parsedChartData;
   const hasData = revenueData.length > 0 || expenseData.length > 0;
@@ -80,12 +81,8 @@ const Dashboard = () => {
             "Suggest growth strategies and optimize recommendations as a strategic advisor."
           );
         }
-      }, 600);
+      }, 800);
       return () => clearTimeout(timer);
-    }
-    if (uploadedFiles.length === 0) {
-      setAutoAnalyzeTriggered(false);
-      autoAnalyzeGuard.current = false;
     }
   }, [uploadedFiles.length, autoAnalyzeTriggered]);
 
@@ -103,6 +100,50 @@ const Dashboard = () => {
     if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
     return v.toLocaleString();
   };
+
+  // Auto-detect insights from real data
+  const autoInsights: { icon: typeof AlertCircle; color: string; bg: string; text: string }[] = [];
+  if (hasData) {
+    // Revenue trend detection
+    if (revenueData.length >= 3) {
+      const last3 = revenueData.slice(-3);
+      const isDecline = last3[2].revenue < last3[0].revenue;
+      const changePercent = last3[0].revenue > 0 ? Math.abs(((last3[2].revenue - last3[0].revenue) / last3[0].revenue) * 100).toFixed(1) : "0";
+      if (isDecline) {
+        autoInsights.push({ icon: AlertTriangle, color: "text-[hsl(340,75%,60%)]", bg: "kpi-card-pink", text: `⚠️ Revenue declined ${changePercent}% over the last 3 periods (${last3[0].month} → ${last3[2].month}).` });
+      } else {
+        autoInsights.push({ icon: TrendingUp, color: "text-[hsl(152,69%,45%)]", bg: "kpi-card-green", text: `📈 Revenue grew ${changePercent}% over the last 3 periods (${last3[0].month} → ${last3[2].month}).` });
+      }
+    }
+    // Expense vs revenue ratio
+    if (totalRevenue > 0 && totalExpense > 0) {
+      const ratio = (totalExpense / totalRevenue * 100).toFixed(1);
+      if (parseFloat(ratio) > 80) {
+        autoInsights.push({ icon: Flame, color: "text-[hsl(25,95%,58%)]", bg: "kpi-card-orange", text: `🔥 Expenses are ${ratio}% of revenue — profit margins are critically thin.` });
+      } else if (parseFloat(ratio) > 60) {
+        autoInsights.push({ icon: Eye, color: "text-[hsl(220,80%,60%)]", bg: "kpi-card-blue", text: `👁️ Expenses consume ${ratio}% of revenue. Monitor cost efficiency.` });
+      } else {
+        autoInsights.push({ icon: Award, color: "text-[hsl(152,69%,45%)]", bg: "kpi-card-green", text: `✅ Healthy cost ratio: expenses are only ${ratio}% of revenue.` });
+      }
+    }
+    // Peak period detection
+    if (revenueData.length > 1) {
+      const peakIdx = revenueData.reduce((best, d, i) => d.revenue > revenueData[best].revenue ? i : best, 0);
+      autoInsights.push({ icon: Sparkles, color: "text-[hsl(280,70%,65%)]", bg: "kpi-card-purple", text: `🏆 Peak revenue period: ${revenueData[peakIdx].month} with ${formatValue(revenueData[peakIdx].revenue)}.` });
+    }
+    // Expense spike detection
+    if (expenseData.length >= 2) {
+      for (let i = 1; i < expenseData.length; i++) {
+        const prev = expenseData[i-1].expense;
+        const curr = expenseData[i].expense;
+        if (prev > 0 && curr > prev * 1.3) {
+          const spike = ((curr - prev) / prev * 100).toFixed(0);
+          autoInsights.push({ icon: AlertCircle, color: "text-[hsl(25,95%,58%)]", bg: "kpi-card-orange", text: `⚡ Expense spike of ${spike}% detected in ${expenseData[i].month} vs ${expenseData[i-1].month}.` });
+          break; // Only show first spike
+        }
+      }
+    }
+  }
 
   const kpis = hasData ? [
     { label: "Total Revenue", value: formatValue(totalRevenue), icon: DollarSign, colorClass: "kpi-card-blue", iconColor: "text-[hsl(220,80%,60%)]", up: true },
@@ -184,6 +225,10 @@ const Dashboard = () => {
   const processFiles = async (files: File[]) => {
     if (!files.length) return;
     setUploading(true);
+    // Reset auto-analyze so it fires again for new files
+    setAutoAnalyzeTriggered(false);
+    autoAnalyzeGuard.current = false;
+    
     for (const file of files) {
       const ext = file.name.split(".").pop()?.toLowerCase() || "";
       const isImage = ["jpeg", "jpg", "png", "gif", "webp", "svg"].includes(ext);
@@ -197,7 +242,7 @@ const Dashboard = () => {
           else toast.error(`Could not parse ${file.name}`);
           continue;
         }
-        if (ext === "pdf") { setUploadedFiles(prev => [...prev, { name: file.name, content: `[PDF: ${file.name}]`, category: "other", type: ext }]); toast.info(`${file.name} uploaded (PDF content cannot be auto-parsed)`); continue; }
+        if (ext === "pdf") { setUploadedFiles(prev => [...prev, { name: file.name, content: `[PDF: ${file.name}]`, category: "other", type: ext }]); toast.info(`${file.name} uploaded (PDF content cannot be auto-parsed in browser)`); continue; }
         const text = await file.text();
         const content = parseFileContent(text, file.name);
         setUploadedFiles(prev => [...prev, { name: file.name, content, category: "other", type: ext }]);
@@ -205,8 +250,6 @@ const Dashboard = () => {
         toast.success(`${file.name} uploaded & parsed`);
       } catch { toast.error(`Failed to read ${file.name}`); }
     }
-    setAutoAnalyzeTriggered(false);
-    autoAnalyzeGuard.current = false;
     setUploading(false);
   };
 
@@ -221,7 +264,16 @@ const Dashboard = () => {
 
   const removeFile = (idx: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
-    if (uploadedFiles.length <= 1) setParsedChartData({ revenueData: [], expenseData: [] });
+    if (uploadedFiles.length <= 1) {
+      setParsedChartData({ revenueData: [], expenseData: [] });
+      setAiCharts([]);
+      setAiStory("");
+      setAiForecast("");
+      setAiSimulation("");
+      setAiCofounder("");
+      setAutoAnalyzeTriggered(false);
+      autoAnalyzeGuard.current = false;
+    }
   };
 
   const getFileIcon = (type: string) => {
@@ -230,7 +282,6 @@ const Dashboard = () => {
     return FileText;
   };
 
-  // Get table data from uploaded files
   const getTableData = () => {
     for (const f of uploadedFiles) {
       try { const parsed = JSON.parse(f.content); if (parsed.headers && parsed.rows) return parsed; } catch { /* skip */ }
@@ -243,12 +294,14 @@ const Dashboard = () => {
   const handleStoryGenerated = useCallback((story: string) => { setAiStory(story); }, []);
   const handleForecastGenerated = useCallback((text: string) => { setAiForecast(text); }, []);
   const handleSimulationGenerated = useCallback((text: string) => { setAiSimulation(text); }, []);
+  const handleCofounderGenerated = useCallback((text: string) => { setAiCofounder(text); }, []);
 
   const dashTabs: { key: DashTabKey; icon: typeof BarChart3; label: string }[] = [
     { key: "overview", icon: BarChart3, label: "Overview" },
     { key: "story", icon: BookOpen, label: "AI Story" },
     { key: "forecast", icon: TrendingUp, label: "Forecast" },
     { key: "simulation", icon: Shuffle, label: "Simulation" },
+    { key: "cofounder", icon: Brain, label: "Co-Founder" },
     { key: "table", icon: Table, label: "Data Table" },
   ];
 
@@ -269,7 +322,6 @@ const Dashboard = () => {
     );
   };
 
-  // Combined revenue + expense data for comparison chart
   const combinedData = revenueData.map((r, i) => ({
     month: r.month,
     revenue: r.revenue,
@@ -304,13 +356,13 @@ const Dashboard = () => {
         {/* Upload Zone */}
         <motion.div
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className={`glass-card p-8 mb-6 transition-all duration-200 ${isDragging ? "ring-2 ring-[hsl(220,80%,60%)] border-[hsl(220,80%,60%)/0.5] bg-[hsl(220,80%,60%)/0.05]" : ""}`}
+          className={`glass-card p-8 mb-6 transition-all duration-200 ${isDragging ? "ring-2 ring-primary border-primary/50 bg-primary/5" : ""}`}
           onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
         >
           {isDragging && (
             <div className="text-center py-6 mb-4">
-              <Upload className="h-12 w-12 text-[hsl(220,80%,60%)] mx-auto mb-3 animate-bounce" />
-              <p className="text-lg font-black text-[hsl(220,80%,60%)]">Drop files here to upload</p>
+              <Upload className="h-12 w-12 text-primary mx-auto mb-3 animate-bounce" />
+              <p className="text-lg font-black text-primary">Drop files here to upload</p>
             </div>
           )}
           <div className="flex flex-wrap items-center gap-4">
@@ -320,7 +372,7 @@ const Dashboard = () => {
             </Button>
             <span className="text-sm text-muted-foreground flex items-center gap-2 font-semibold">
               <Image className="h-4 w-4" />
-              CSV, JSON, TXT, PDF, Excel, Images — auto-detected
+              CSV, JSON, TXT, Excel, Images — auto-detected
             </span>
           </div>
           {uploading && (
@@ -333,7 +385,7 @@ const Dashboard = () => {
               {uploadedFiles.map((f, i) => {
                 const Icon = getFileIcon(f.type);
                 return (
-                  <div key={i} className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[hsl(220,80%,60%)/0.1] text-[hsl(220,80%,60%)] text-sm font-bold border border-[hsl(220,80%,60%)/0.2]">
+                  <div key={i} className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary/10 text-primary text-sm font-bold border border-primary/20">
                     <Icon className="h-4 w-4" /> {f.name}
                     <button onClick={() => removeFile(i)} className="ml-1 hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
                   </div>
@@ -360,13 +412,33 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
+        {/* Auto Insights */}
+        {autoInsights.length > 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="h-5 w-5 text-[hsl(280,70%,65%)]" />
+              <h3 className="text-lg font-black text-foreground">Auto-Detected Insights</h3>
+              <span className="text-xs px-2 py-1 rounded-full bg-accent/20 text-accent font-bold">Live from your data</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {autoInsights.map((insight, i) => (
+                <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * i }}
+                  className={`glass-card p-5 ${insight.bg} border flex items-start gap-3`}>
+                  <insight.icon className={`h-5 w-5 ${insight.color} shrink-0 mt-0.5`} />
+                  <p className="text-sm text-foreground leading-relaxed font-bold">{insight.text}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Empty State */}
         {!hasData && uploadedFiles.length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card p-20 text-center mb-8">
             <BarChart3 className="h-24 w-24 text-muted-foreground mx-auto mb-8 opacity-15" />
             <h2 className="text-4xl font-black mb-5 text-foreground">No Data Uploaded Yet</h2>
             <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-8 font-medium">
-              Upload your business data and watch AI transform it into <strong className="text-[hsl(220,80%,60%)]">actionable intelligence</strong> — charts, KPIs, forecasts, and strategic recommendations.
+              Upload your business data and watch AI transform it into <strong className="text-primary">actionable intelligence</strong> — charts, KPIs, forecasts, and strategic recommendations.
             </p>
             <Button onClick={() => fileRef.current?.click()} className="gradient-primary text-white font-black px-8 py-4 text-lg">
               <Upload className="h-5 w-5 mr-2" /> Upload Your Data
@@ -403,7 +475,6 @@ const Dashboard = () => {
               {hasData && (
                 <>
                   <div className="grid lg:grid-cols-2 gap-5">
-                    {/* Revenue Trend */}
                     <div className="glass-card p-6">
                       <h3 className="text-base font-black mb-4 flex items-center gap-2 text-foreground">
                         <BarChart3 className="h-5 w-5 text-[hsl(220,80%,60%)]" /> Revenue Trend
@@ -416,16 +487,15 @@ const Dashboard = () => {
                               <stop offset="95%" stopColor="hsl(220,80%,60%)" stopOpacity={0} />
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,18%,20%)" />
-                          <XAxis dataKey="month" stroke="hsl(215,15%,55%)" fontSize={12} fontWeight={600} />
-                          <YAxis stroke="hsl(215,15%,55%)" fontSize={12} fontWeight={600} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} fontWeight={600} />
+                          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} fontWeight={600} />
                           <Tooltip contentStyle={tooltipStyle} />
                           <Area type="monotone" dataKey="revenue" stroke="hsl(220,80%,60%)" fill="url(#revGradD)" strokeWidth={3} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
 
-                    {/* Expense Trend */}
                     <div className="glass-card p-6">
                       <h3 className="text-base font-black mb-4 flex items-center gap-2 text-foreground">
                         <TrendingDown className="h-5 w-5 text-[hsl(25,95%,58%)]" /> Expense Trend
@@ -438,9 +508,9 @@ const Dashboard = () => {
                               <stop offset="95%" stopColor="hsl(25,95%,58%)" stopOpacity={0} />
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,18%,20%)" />
-                          <XAxis dataKey="month" stroke="hsl(215,15%,55%)" fontSize={12} fontWeight={600} />
-                          <YAxis stroke="hsl(215,15%,55%)" fontSize={12} fontWeight={600} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} fontWeight={600} />
+                          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} fontWeight={600} />
                           <Tooltip contentStyle={tooltipStyle} />
                           <Area type="monotone" dataKey="expense" stroke="hsl(25,95%,58%)" fill="url(#expGradD)" strokeWidth={3} />
                         </AreaChart>
@@ -449,7 +519,6 @@ const Dashboard = () => {
                   </div>
 
                   <div className="grid lg:grid-cols-2 gap-5">
-                    {/* Revenue vs Expense Pie */}
                     <div className="glass-card p-6">
                       <h3 className="text-base font-black mb-4 flex items-center gap-2 text-foreground">
                         <PieChartIcon className="h-5 w-5 text-[hsl(280,70%,65%)]" /> Revenue vs Expense
@@ -481,16 +550,15 @@ const Dashboard = () => {
                       </div>
                     </div>
 
-                    {/* Revenue vs Expense Bar Comparison */}
                     <div className="glass-card p-6">
                       <h3 className="text-base font-black mb-4 flex items-center gap-2 text-foreground">
                         <Layers className="h-5 w-5 text-[hsl(340,75%,60%)]" /> Revenue vs Expense Comparison
                       </h3>
                       <ResponsiveContainer width="100%" height={250}>
                         <BarChart data={combinedData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,18%,20%)" />
-                          <XAxis dataKey="month" stroke="hsl(215,15%,55%)" fontSize={12} fontWeight={600} />
-                          <YAxis stroke="hsl(215,15%,55%)" fontSize={12} fontWeight={600} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} fontWeight={600} />
+                          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} fontWeight={600} />
                           <Tooltip contentStyle={tooltipStyle} />
                           <Bar dataKey="revenue" fill="hsl(220,80%,60%)" radius={[6, 6, 0, 0]} name="Revenue" />
                           <Bar dataKey="expense" fill="hsl(25,95%,58%)" radius={[6, 6, 0, 0]} name="Expense" />
@@ -499,16 +567,15 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* Revenue Breakdown */}
                   <div className="glass-card p-6">
                     <h3 className="text-base font-black mb-4 flex items-center gap-2 text-foreground">
                       <CircleDot className="h-5 w-5 text-[hsl(280,70%,65%)]" /> Revenue Breakdown by Period
                     </h3>
                     <ResponsiveContainer width="100%" height={260}>
                       <BarChart data={revenueData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(222,18%,20%)" />
-                        <XAxis dataKey="month" stroke="hsl(215,15%,55%)" fontSize={12} fontWeight={600} />
-                        <YAxis stroke="hsl(215,15%,55%)" fontSize={12} fontWeight={600} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} fontWeight={600} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} fontWeight={600} />
                         <Tooltip contentStyle={tooltipStyle} />
                         <Bar dataKey="revenue" radius={[8, 8, 0, 0]}>
                           {revenueData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
@@ -555,7 +622,7 @@ const Dashboard = () => {
               {activeTab === "forecast" && (
                 <div className="glass-card p-8 min-h-[350px]">
                   <div className="flex items-center gap-2 mb-6"><TrendingUp className="h-5 w-5 text-[hsl(220,80%,60%)]" /><h3 className="text-lg font-black text-foreground">Predictive Forecast</h3></div>
-                  {renderMarkdown(aiForecast, "No Forecast Yet", "AI will auto-generate forecasts when data is uploaded. You can also ask: 'Create a forecast for next quarter.'", TrendingUp)}
+                  {renderMarkdown(aiForecast, "No Forecast Yet", "AI will auto-generate forecasts when data is uploaded.", TrendingUp)}
                 </div>
               )}
 
@@ -563,6 +630,13 @@ const Dashboard = () => {
                 <div className="glass-card p-8 min-h-[350px]">
                   <div className="flex items-center gap-2 mb-6"><Shuffle className="h-5 w-5 text-[hsl(340,75%,60%)]" /><h3 className="text-lg font-black text-foreground">Scenario Simulation</h3></div>
                   {renderMarkdown(aiSimulation, "No Simulation Yet", "AI will auto-generate what-if scenarios. Try asking: 'What if we cut costs 15%?'", Shuffle)}
+                </div>
+              )}
+
+              {activeTab === "cofounder" && (
+                <div className="glass-card p-8 min-h-[350px]">
+                  <div className="flex items-center gap-2 mb-6"><Brain className="h-5 w-5 text-[hsl(280,70%,65%)]" /><h3 className="text-lg font-black text-foreground">AI Strategic Co-Founder</h3></div>
+                  {renderMarkdown(aiCofounder, "No Strategic Analysis Yet", "Your AI strategic partner. Ask for growth strategies, profit leak analysis, cost optimization.", Brain)}
                 </div>
               )}
 
@@ -647,6 +721,7 @@ const Dashboard = () => {
                 onStoryGenerated={handleStoryGenerated}
                 onForecastGenerated={handleForecastGenerated}
                 onSimulationGenerated={handleSimulationGenerated}
+                onCofounderGenerated={handleCofounderGenerated}
               />
             </div>
           </div>
