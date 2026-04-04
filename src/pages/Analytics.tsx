@@ -77,6 +77,10 @@ const Analytics = () => {
 
   const processFiles = async (files: File[]) => {
     if (!files.length) return;
+    // Reset auto-analyze before adding files so useEffect triggers
+    setAutoAnalyzeTriggered(false);
+    autoAnalyzeGuard.current = false;
+    
     const parsed: { name: string; content: string; type: string }[] = [];
     for (const file of files) {
       const ext = file.name.split(".").pop()?.toLowerCase() || "";
@@ -93,8 +97,6 @@ const Analytics = () => {
         else { const text = await file.text(); const content = parseFileContent(text, file.name); parsed.push({ name: file.name, content, type: ext }); }
       } catch { toast.error(`Failed to read ${file.name}`); }
     }
-    setAutoAnalyzeTriggered(false);
-    autoAnalyzeGuard.current = false;
     setUploadedFiles((prev) => [...prev, ...parsed]);
     toast.success(`${parsed.length} file(s) loaded — AI is analyzing automatically!`);
     if (fileRef.current) fileRef.current.value = "";
