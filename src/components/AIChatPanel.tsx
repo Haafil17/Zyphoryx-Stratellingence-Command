@@ -31,6 +31,82 @@ const quickQuestions = [
   "Suggest growth strategies",
 ];
 
+/**
+ * Parse sectioned AI response with markers like ## STORY, ## FORECAST, etc.
+ * Falls back to routing by user input keywords.
+ */
+function parseSections(fullText: string): {
+  story: string;
+  forecast: string;
+  simulation: string;
+  cofounder: string;
+  general: string;
+} {
+  const result = { story: "", forecast: "", simulation: "", cofounder: "", general: "" };
+
+  // Try to extract sections by markers
+  const sectionMap: Record<string, keyof typeof result> = {
+    "DATA STORY": "story",
+    "EXECUTIVE SUMMARY": "story",
+    "NARRATIVE": "story",
+    "STORY": "story",
+    "FORECAST": "forecast",
+    "PREDICTION": "forecast",
+    "PROJECTION": "forecast",
+    "SIMULATION": "simulation",
+    "SCENARIO": "simulation",
+    "WHAT-IF": "simulation",
+    "WHAT IF": "simulation",
+    "STRATEGIC": "cofounder",
+    "STRATEGY": "cofounder",
+    "GROWTH": "cofounder",
+    "CO-FOUNDER": "cofounder",
+    "RECOMMENDATION": "cofounder",
+  };
+
+  // Split by ## or # headings
+  const lines = fullText.split("\n");
+  let currentSection: keyof typeof result = "general";
+  let currentContent: string[] = [];
+
+  const flushSection = () => {
+    const content = currentContent.join("\n").trim();
+    if (content) {
+      if (result[currentSection]) {
+        result[currentSection] += "\n\n" + content;
+      } else {
+        result[currentSection] = content;
+      }
+    }
+    currentContent = [];
+  };
+
+  for (const line of lines) {
+    const headingMatch = line.match(/^#{1,3}\s+(.+)/);
+    if (headingMatch) {
+      flushSection();
+      const headingText = headingMatch[1].toUpperCase();
+      let matched = false;
+      for (const [keyword, section] of Object.entries(sectionMap)) {
+        if (headingText.includes(keyword)) {
+          currentSection = section;
+          currentContent.push(line);
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        currentContent.push(line);
+      }
+    } else {
+      currentContent.push(line);
+    }
+  }
+  flushSection();
+
+  return result;
+}
+
 const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData, onChartsGenerated, onStoryGenerated, onForecastGenerated, onSimulationGenerated, onCofounderGenerated }, ref) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -51,23 +127,36 @@ const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData,
   }, [messages]);
 
   const routeResponse = (fullText: string, userInput: string) => {
-    // Strip chart blocks from text before routing to story/forecast/etc tabs
     const { text } = parseChartBlocks(fullText);
     const cleanText = text.trim();
     if (!cleanText) return;
 
     const lower = userInput.toLowerCase();
+    const isComprehensive = lower.includes("analyze this data") || lower.includes("comprehensively");
 
-    // For auto-analyze (broad analysis), route to story
-    const isAutoAnalyze = lower.includes("analyze this data") && lower.includes("trends");
+    if (isComprehensive) {
+      // Parse sections from the AI response
+      const sections = parseSections(cleanText);
+      if (sections.story && onStoryGenerated) onStoryGenerated(sections.story);
+      if (sections.forecast && onForecastGenerated) onForecastGenerated(sections.forecast);
+      if (sections.simulation && onSimulationGenerated) onSimulationGenerated(sections.simulation);
+      if (sections.cofounder && onCofounderGenerated) onCofounderGenerated(sections.cofounder);
 
-    if ((isAutoAnalyze || lower.includes("story") || lower.includes("summary") || lower.includes("narrative") || lower.includes("executive") || lower.includes("summarize")) && onStoryGenerated) {
+      // If no sections were parsed, send everything to story as fallback
+      if (!sections.story && !sections.forecast && !sections.simulation && !sections.cofounder) {
+        if (onStoryGenerated) onStoryGenerated(cleanText);
+      }
+      return;
+    }
+
+    // Individual routing by keywords
+    if ((lower.includes("story") || lower.includes("summary") || lower.includes("narrative") || lower.includes("executive") || lower.includes("summarize")) && onStoryGenerated) {
       onStoryGenerated(cleanText);
     }
     if ((lower.includes("forecast") || lower.includes("predict") || lower.includes("projection") || lower.includes("future")) && onForecastGenerated) {
       onForecastGenerated(cleanText);
     }
-    if ((lower.includes("what if") || lower.includes("scenario") || lower.includes("simulation") || lower.includes("simulate")) && onSimulationGenerated) {
+    if ((lower.includes("what if") || lower.includes("what-if") || lower.includes("scenario") || lower.includes("simulation") || lower.includes("simulate")) && onSimulationGenerated) {
       onSimulationGenerated(cleanText);
     }
     if ((lower.includes("strategy") || lower.includes("growth") || lower.includes("profit leak") || lower.includes("optimize") || lower.includes("co-founder") || lower.includes("cofounder") || lower.includes("advisor")) && onCofounderGenerated) {
@@ -106,7 +195,7 @@ const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData,
         if (charts.length > 0 && onChartsGenerated) {
           onChartsGenerated(charts);
         }
-        routeResponse(text, lastSentRef.current);
+        routeResponse(assistantSoFar, lastSentRef.current);
       },
       onError: (error) => {
         toast.error(error);
@@ -115,7 +204,6 @@ const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData,
     });
   };
 
-  // Expose sendMessage to parent via ref — include deps to avoid stale closure
   useImperativeHandle(ref, () => ({
     sendMessage: (msg: string) => handleSend(msg),
   }), [fileData, messages, isLoading]);
@@ -124,7 +212,7 @@ const AIChatPanel = forwardRef<AIChatPanelHandle, AIChatPanelProps>(({ fileData,
     const { text, charts } = parseChartBlocks(content);
     return (
       <>
-        <div className="prose prose-sm prose-invert max-w-none [&_p]:mb-2 [&_p]:text-foreground [&_h1]:text-base [&_h1]:font-bold [&_h1]:text-foreground [&_h2]:text-sm [&_h2]:font-bold [&_h2]:text-foreground [&_h3]:text-sm [&_h3]:font-bold [&_h3]:text-foreground [&_li]:text-sm [&_li]:text-foreground [&_strong]:text-foreground">
+        <div className="prose prose-sm prose-invert max-w-none [&_p]:mb-2 [&_p]:text-foreground [&_h1]:text-base [&_h1]:font-black [&_h1]:text-foreground [&_h2]:text-sm [&_h2]:font-bold [&_h2]:text-foreground [&_h3]:text-sm [&_h3]:font-bold [&_h3]:text-foreground [&_li]:text-sm [&_li]:text-foreground [&_strong]:text-foreground">
           <ReactMarkdown>{text}</ReactMarkdown>
         </div>
         {charts.map((chart, i) => (
