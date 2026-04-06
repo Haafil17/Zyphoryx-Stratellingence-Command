@@ -1,8 +1,47 @@
 import * as XLSX from "xlsx";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-data`;
 
+if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+}
+
 export type ChatMessage = { role: "user" | "assistant"; content: string };
+
+export interface StructuredData {
+  headers: string[];
+  rows: Record<string, string>[];
+  totalRows: number;
+}
+
+function isStructuredData(value: unknown): value is StructuredData {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as StructuredData;
+  return Array.isArray(candidate.headers) && Array.isArray(candidate.rows);
+}
+
+export function parseStructuredData(content: string): StructuredData | null {
+  try {
+    const parsed = JSON.parse(content);
+    if (!isStructuredData(parsed)) return null;
+
+    return {
+      headers: parsed.headers.map((header) => String(header ?? "")),
+      rows: parsed.rows.map((row) => {
+        const normalized: Record<string, string> = {};
+        Object.entries(row ?? {}).forEach(([key, value]) => {
+          normalized[String(key)] = String(value ?? "");
+        });
+        return normalized;
+      }),
+      totalRows: typeof parsed.totalRows === "number" ? parsed.totalRows : parsed.rows.length,
+    };
+  } catch {
+    return null;
+  }
+}
 
 export async function streamAnalyticsChat({
   messages,
@@ -159,6 +198,34 @@ export function parseExcel(buffer: ArrayBuffer): string {
     return JSON.stringify({ headers, rows, totalRows: jsonData.length }, null, 2);
   } catch (e) {
     console.error("Excel parse error:", e);
+    return "";
+  }
+}
+
+export async function parsePdf(buffer: ArrayBuffer): Promise<string> {
+  try {
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+    const pages: string[] = [];
+
+    for (let pageNumber = 1; pageNumber <= Math.min(pdf.numPages, 20); pageNumber++) {
+      const page = await pdf.getPage(pageNumber);
+      const textContent = await page.getTextContent();
+      const text = textContent.items
+        .map((item) => ("str" in item ? item.str : ""))
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (text) pages.push(text);
+    }
+
+    const extractedText = pages.join("\n\n").trim();
+    if (!extractedText) return "";
+
+    const tabular = tryParseTabularText(extractedText);
+    return tabular || extractedText.slice(0, 50000);
+  } catch (e) {
+    console.error("PDF parse error:", e);
     return "";
   }
 }

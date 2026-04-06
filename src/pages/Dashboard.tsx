@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { parseFileContent, parseCSV, parseExcel } from "@/lib/analytics-ai";
+import { parseFileContent, parseExcel, parsePdf, parseStructuredData } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
 import { useFileDrop } from "@/hooks/use-file-drop";
 import ExportButtons from "@/components/ExportButtons";
@@ -35,6 +35,54 @@ const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gi
 
 const REVENUE_KEYWORDS = ["revenue", "sales", "income", "earning", "turnover", "gross"];
 const EXPENSE_KEYWORDS = ["expense", "cost", "spending", "budget", "expenditure", "outflow"];
+const AMOUNT_KEYWORDS = ["amount", "amt", "value", "total", "net"];
+const FILE_REVENUE_KEYWORDS = [...REVENUE_KEYWORDS, "receipt", "receipts"];
+const FILE_EXPENSE_KEYWORDS = [...EXPENSE_KEYWORDS, "expence", "expenses"];
+
+type StructuredRow = Record<string, string>;
+
+const parseNumericValue = (val: unknown): number => {
+  const s = String(val || "0").replace(/[₹$€£¥,\s%]/g, "");
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+};
+
+const sortLabels = (labels: string[]) => labels.sort((a, b) => {
+  const dateA = Date.parse(a);
+  const dateB = Date.parse(b);
+  if (!Number.isNaN(dateA) && !Number.isNaN(dateB)) return dateA - dateB;
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+});
+
+const detectSingleMetricKind = (headers: string[], rows: StructuredRow[], fileName: string) => {
+  const combinedText = `${fileName} ${headers.join(" ")}`.toLowerCase();
+  if (FILE_EXPENSE_KEYWORDS.some((keyword) => combinedText.includes(keyword))) return "expense";
+  if (FILE_REVENUE_KEYWORDS.some((keyword) => combinedText.includes(keyword))) return "revenue";
+
+  const typeHeader = headers.find((header) => {
+    const normalized = header.toLowerCase();
+    return normalized === "type" || normalized.includes("type") || normalized.includes("kind");
+  });
+
+  if (!typeHeader) return "unknown";
+
+  const values = rows.slice(0, 25).map((row) => String(row[typeHeader] || "").toLowerCase());
+  const expenseHits = values.filter((value) => FILE_EXPENSE_KEYWORDS.some((keyword) => value.includes(keyword))).length;
+  const revenueHits = values.filter((value) => FILE_REVENUE_KEYWORDS.some((keyword) => value.includes(keyword))).length;
+
+  if (expenseHits > revenueHits) return "expense";
+  if (revenueHits > expenseHits) return "revenue";
+  return "unknown";
+};
+
+const aggregateMetric = (rows: StructuredRow[], labelKey: string, valueKey: string, target: Map<string, number>) => {
+  rows.forEach((row) => {
+    const label = String(row[labelKey] || "Row").trim() || "Row";
+    const value = parseNumericValue(row[valueKey]);
+    if (value === 0) return;
+    target.set(label, (target.get(label) || 0) + value);
+  });
+};
 
 const TIPS = [
   { icon: Lightbulb, color: "text-[hsl(220,80%,60%)]", bg: "kpi-card-blue", text: "Upload a single file with both revenue and expense columns for the most accurate KPIs and profit analysis." },
@@ -47,7 +95,7 @@ const TIPS = [
 type DashTabKey = "overview" | "story" | "forecast" | "simulation" | "cofounder" | "table";
 
 const Dashboard = () => {
-  const { dashboardFiles: uploadedFiles, setDashboardFiles: setUploadedFiles, parsedChartData, setParsedChartData } = useFileStore();
+  const { dashboardFiles: uploadedFiles, setDashboardFiles: setUploadedFiles } = useFileStore();
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const chatRef = useRef<AIChatPanelHandle>(null);
@@ -60,9 +108,6 @@ const Dashboard = () => {
   const [aiForecast, setAiForecast] = useState("");
   const [aiSimulation, setAiSimulation] = useState("");
   const [aiCofounder, setAiCofounder] = useState("");
-
-  const { revenueData, expenseData } = parsedChartData;
-  const hasData = revenueData.length > 0 || expenseData.length > 0;
 
   const fileData = uploadedFiles.map(f => `--- FILE: ${f.name} ---\n${f.content}`).join("\n\n");
 
@@ -84,7 +129,7 @@ const Dashboard = () => {
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [uploadedFiles.length, autoAnalyzeTriggered]);
+  }, [fileData, uploadedFiles.length, autoAnalyzeTriggered]);
 
   const totalRevenue = revenueData.reduce((s, d) => s + d.revenue, 0);
   const totalExpense = expenseData.reduce((s, d) => s + d.expense, 0);
@@ -154,12 +199,6 @@ const Dashboard = () => {
     { label: "Peak Revenue", value: formatValue(maxRevenue), icon: ArrowUpRight, colorClass: "kpi-card-blue", iconColor: "text-[hsl(220,80%,60%)]", up: true },
   ] : [];
 
-  const parseNum = (val: unknown): number => {
-    const s = String(val || "0").replace(/[₹$€£¥,\s%]/g, "");
-    const n = parseFloat(s);
-    return isNaN(n) ? 0 : n;
-  };
-
   const findColumnByKeywords = (headers: string[], keywords: string[], excludeIdx?: number): number => {
     return headers.findIndex((h, i) => {
       if (i === excludeIdx) return false;
@@ -192,64 +231,118 @@ const Dashboard = () => {
     return -1;
   };
 
-  const tryParseChartData = (content: string) => {
-    try {
-      const parsed = JSON.parse(content);
-      if (!parsed.headers || !parsed.rows || parsed.rows.length === 0) return;
-      const headers: string[] = parsed.headers;
-      const rows: Record<string, string>[] = parsed.rows;
+  const { revenueData, expenseData, tableData } = useMemo(() => {
+    const revenueMap = new Map<string, number>();
+    const expenseMap = new Map<string, number>();
+    let firstStructuredTable: ReturnType<typeof parseStructuredData> = null;
+
+    for (const file of uploadedFiles) {
+      const parsed = parseStructuredData(file.content);
+      if (!parsed || parsed.rows.length === 0) continue;
+      if (!firstStructuredTable) firstStructuredTable = parsed;
+
+      const headers = parsed.headers;
+      const rows = parsed.rows;
       const labelIdx = findLabelColumn(headers, rows);
-      let revIdx = findColumnByKeywords(headers, REVENUE_KEYWORDS, labelIdx);
-      let expIdx = findColumnByKeywords(headers, EXPENSE_KEYWORDS, labelIdx);
-      if (revIdx < 0 && expIdx < 0) {
-        const first = findFirstNumericCol(headers, rows, [labelIdx]);
-        if (first >= 0) { revIdx = first; const second = findFirstNumericCol(headers, rows, [labelIdx, first]); if (second >= 0) expIdx = second; }
-      } else if (revIdx >= 0 && expIdx < 0) { const next = findFirstNumericCol(headers, rows, [labelIdx, revIdx]); if (next >= 0) expIdx = next; }
-      else if (expIdx >= 0 && revIdx < 0) { const next = findFirstNumericCol(headers, rows, [labelIdx, expIdx]); if (next >= 0) revIdx = next; }
-      if (revIdx >= 0) {
-        const chartData = rows.slice(0, 50).map((row) => ({ month: String(row[headers[labelIdx]] || "Row"), revenue: parseNum(row[headers[revIdx]]), forecast: parseNum(row[headers[revIdx]]) }));
-        if (chartData.some(d => d.revenue > 0)) setParsedChartData(prev => ({ ...prev, revenueData: chartData }));
+      const labelKey = headers[labelIdx];
+      const revenueIdx = findColumnByKeywords(headers, REVENUE_KEYWORDS, labelIdx);
+      const expenseIdx = findColumnByKeywords(headers, EXPENSE_KEYWORDS, labelIdx);
+      const amountIdx = findColumnByKeywords(headers, AMOUNT_KEYWORDS, labelIdx);
+      const detectedKind = detectSingleMetricKind(headers, rows, file.name);
+
+      if (revenueIdx >= 0) aggregateMetric(rows, labelKey, headers[revenueIdx], revenueMap);
+      if (expenseIdx >= 0) aggregateMetric(rows, labelKey, headers[expenseIdx], expenseMap);
+
+      if (revenueIdx < 0 && expenseIdx < 0) {
+        const primaryNumericIdx = amountIdx >= 0 ? amountIdx : findFirstNumericCol(headers, rows, [labelIdx]);
+        if (primaryNumericIdx < 0) continue;
+
+        if (detectedKind === "revenue") {
+          aggregateMetric(rows, labelKey, headers[primaryNumericIdx], revenueMap);
+          continue;
+        }
+
+        if (detectedKind === "expense") {
+          aggregateMetric(rows, labelKey, headers[primaryNumericIdx], expenseMap);
+          continue;
+        }
+
+        const secondaryNumericIdx = findFirstNumericCol(headers, rows, [labelIdx, primaryNumericIdx]);
+        if (secondaryNumericIdx >= 0) {
+          aggregateMetric(rows, labelKey, headers[primaryNumericIdx], revenueMap);
+          aggregateMetric(rows, labelKey, headers[secondaryNumericIdx], expenseMap);
+        }
+        continue;
       }
-      if (expIdx >= 0) {
-        const chartData = rows.slice(0, 50).map((row) => ({ month: String(row[headers[labelIdx]] || "Row"), expense: parseNum(row[headers[expIdx]]) }));
-        if (chartData.some(d => d.expense > 0)) setParsedChartData(prev => ({ ...prev, expenseData: chartData }));
+
+      if (revenueIdx < 0 && amountIdx >= 0 && detectedKind === "revenue") {
+        aggregateMetric(rows, labelKey, headers[amountIdx], revenueMap);
       }
-    } catch {
-      try {
-        const reparsed = parseCSV(content);
-        if (reparsed) { const parsed2 = JSON.parse(reparsed); if (parsed2.headers && parsed2.rows && parsed2.rows.length > 0) tryParseChartData(reparsed); }
-      } catch { /* skip */ }
+
+      if (expenseIdx < 0 && amountIdx >= 0 && detectedKind === "expense") {
+        aggregateMetric(rows, labelKey, headers[amountIdx], expenseMap);
+      }
     }
-  };
+
+    const labels = sortLabels(Array.from(new Set([...revenueMap.keys(), ...expenseMap.keys()])));
+
+    return {
+      revenueData: labels
+        .filter((label) => revenueMap.has(label))
+        .map((label) => ({ month: label, revenue: revenueMap.get(label) || 0, forecast: revenueMap.get(label) || 0 })),
+      expenseData: labels
+        .filter((label) => expenseMap.has(label))
+        .map((label) => ({ month: label, expense: expenseMap.get(label) || 0 })),
+      tableData: firstStructuredTable,
+    };
+  }, [uploadedFiles]);
+
+  const hasData = revenueData.length > 0 || expenseData.length > 0;
 
   const processFiles = async (files: File[]) => {
     if (!files.length) return;
     setUploading(true);
-    // Reset auto-analyze so it fires again for new files
     setAutoAnalyzeTriggered(false);
     autoAnalyzeGuard.current = false;
-    
+    setAiCharts([]);
+    setAiStory("");
+    setAiForecast("");
+    setAiSimulation("");
+    setAiCofounder("");
+    setActiveTab("overview");
+
+    const parsedFiles: typeof uploadedFiles = [];
     for (const file of files) {
       const ext = file.name.split(".").pop()?.toLowerCase() || "";
       const isImage = ["jpeg", "jpg", "png", "gif", "webp", "svg"].includes(ext);
       const isExcel = ["xlsx", "xls"].includes(ext);
       try {
-        if (isImage) { setUploadedFiles(prev => [...prev, { name: file.name, content: `[Image: ${file.name}]`, category: "other", type: ext }]); toast.success(`${file.name} uploaded`); continue; }
+        if (isImage) { parsedFiles.push({ name: file.name, content: `[Image: ${file.name}]`, category: "other", type: ext }); toast.success(`${file.name} uploaded`); continue; }
         if (isExcel) {
           const buffer = await file.arrayBuffer();
           const content = parseExcel(buffer);
-          if (content) { setUploadedFiles(prev => [...prev, { name: file.name, content, category: "other", type: ext }]); tryParseChartData(content); toast.success(`${file.name} uploaded & parsed`); }
+          if (content) { parsedFiles.push({ name: file.name, content, category: "other", type: ext }); toast.success(`${file.name} uploaded & parsed`); }
           else toast.error(`Could not parse ${file.name}`);
           continue;
         }
-        if (ext === "pdf") { setUploadedFiles(prev => [...prev, { name: file.name, content: `[PDF: ${file.name}]`, category: "other", type: ext }]); toast.info(`${file.name} uploaded (PDF content cannot be auto-parsed in browser)`); continue; }
+        if (ext === "pdf") {
+          const buffer = await file.arrayBuffer();
+          const content = await parsePdf(buffer);
+          if (content) {
+            parsedFiles.push({ name: file.name, content, category: "other", type: ext });
+            toast.success(`${file.name} uploaded & parsed`);
+          } else {
+            toast.error(`Could not parse ${file.name}`);
+          }
+          continue;
+        }
         const text = await file.text();
         const content = parseFileContent(text, file.name);
-        setUploadedFiles(prev => [...prev, { name: file.name, content, category: "other", type: ext }]);
-        tryParseChartData(content);
+        parsedFiles.push({ name: file.name, content, category: "other", type: ext });
         toast.success(`${file.name} uploaded & parsed`);
       } catch { toast.error(`Failed to read ${file.name}`); }
     }
+    setUploadedFiles(parsedFiles);
     setUploading(false);
   };
 
@@ -263,17 +356,14 @@ const Dashboard = () => {
   const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useFileDrop(handleDroppedFiles);
 
   const removeFile = (idx: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
-    if (uploadedFiles.length <= 1) {
-      setParsedChartData({ revenueData: [], expenseData: [] });
-      setAiCharts([]);
-      setAiStory("");
-      setAiForecast("");
-      setAiSimulation("");
-      setAiCofounder("");
-      setAutoAnalyzeTriggered(false);
-      autoAnalyzeGuard.current = false;
-    }
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== idx));
+    setAiCharts([]);
+    setAiStory("");
+    setAiForecast("");
+    setAiSimulation("");
+    setAiCofounder("");
+    setAutoAnalyzeTriggered(false);
+    autoAnalyzeGuard.current = false;
   };
 
   const getFileIcon = (type: string) => {
@@ -281,14 +371,6 @@ const Dashboard = () => {
     if (["xlsx", "xls"].includes(type)) return FileSpreadsheet;
     return FileText;
   };
-
-  const getTableData = () => {
-    for (const f of uploadedFiles) {
-      try { const parsed = JSON.parse(f.content); if (parsed.headers && parsed.rows) return parsed; } catch { /* skip */ }
-    }
-    return null;
-  };
-  const tableData = getTableData();
 
   const handleChartsGenerated = useCallback((charts: ChartData[]) => { setAiCharts(prev => [...prev, ...charts]); }, []);
   const handleStoryGenerated = useCallback((story: string) => { setAiStory(story); }, []);
@@ -322,11 +404,17 @@ const Dashboard = () => {
     );
   };
 
-  const combinedData = revenueData.map((r, i) => ({
-    month: r.month,
-    revenue: r.revenue,
-    expense: expenseData[i]?.expense ?? 0,
-  }));
+  const combinedData = useMemo(() => {
+    const revenueMap = new Map(revenueData.map((item) => [item.month, item.revenue]));
+    const expenseMap = new Map(expenseData.map((item) => [item.month, item.expense]));
+    const labels = sortLabels(Array.from(new Set([...revenueMap.keys(), ...expenseMap.keys()])));
+
+    return labels.map((label) => ({
+      month: label,
+      revenue: revenueMap.get(label) || 0,
+      expense: expenseMap.get(label) || 0,
+    }));
+  }, [expenseData, revenueData]);
 
   return (
     <div className="neural-bg min-h-screen">
@@ -345,8 +433,8 @@ const Dashboard = () => {
             </div>
             {hasData && (
               <ExportButtons
-                data={revenueData.map((r, i) => ({ ...r, expense: expenseData[i]?.expense ?? 0 }))}
-                headers={["month", "revenue", "expense", "forecast"]}
+                data={combinedData}
+                headers={["month", "revenue", "expense"]}
                 filename="dashboard-data"
               />
             )}
@@ -372,7 +460,7 @@ const Dashboard = () => {
             </Button>
             <span className="text-sm text-muted-foreground flex items-center gap-2 font-semibold">
               <Image className="h-4 w-4" />
-              CSV, JSON, TXT, Excel, Images — auto-detected
+              CSV, JSON, TXT, PDF, Excel, Images — auto-detected
             </span>
           </div>
           {uploading && (
