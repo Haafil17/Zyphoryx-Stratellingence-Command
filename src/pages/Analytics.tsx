@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import AIChatPanel from "@/components/AIChatPanel";
 import DynamicChart, { ChartData } from "@/components/DynamicChart";
-import { parseFileContent, parseExcel } from "@/lib/analytics-ai";
+import { parseFileContent, parseExcel, parsePdf, parseStructuredData } from "@/lib/analytics-ai";
 import { useFileStore } from "@/contexts/FileStoreContext";
 import { useFileDrop } from "@/hooks/use-file-drop";
 import ExportButtons from "@/components/ExportButtons";
@@ -65,11 +65,12 @@ const Analytics = () => {
       setAutoAnalyzeTriggered(false);
       autoAnalyzeGuard.current = false;
     }
-  }, [uploadedFiles.length, autoAnalyzeTriggered]);
+  }, [fileData, uploadedFiles.length, autoAnalyzeTriggered]);
 
   const getTableData = () => {
     for (const f of uploadedFiles) {
-      try { const parsed = JSON.parse(f.content); if (parsed.headers && parsed.rows) return parsed; } catch { /* skip */ }
+      const parsed = parseStructuredData(f.content);
+      if (parsed) return parsed;
     }
     return null;
   };
@@ -77,9 +78,15 @@ const Analytics = () => {
 
   const processFiles = async (files: File[]) => {
     if (!files.length) return;
-    // Reset auto-analyze before adding files so useEffect triggers
+
     setAutoAnalyzeTriggered(false);
     autoAnalyzeGuard.current = false;
+    setAiCharts([]);
+    setAiStory("");
+    setAiForecast("");
+    setAiSimulation("");
+    setAiCofounder("");
+    setActiveTab("charts");
     
     const parsed: { name: string; content: string; type: string }[] = [];
     for (const file of files) {
@@ -93,12 +100,17 @@ const Analytics = () => {
           const content = parseExcel(buffer);
           if (content) parsed.push({ name: file.name, content, type: ext });
           else toast.error(`Could not parse ${file.name}`);
-        } else if (ext === "pdf") { parsed.push({ name: file.name, content: `[PDF: ${file.name}]`, type: ext }); }
+        } else if (ext === "pdf") {
+          const buffer = await file.arrayBuffer();
+          const content = await parsePdf(buffer);
+          if (content) parsed.push({ name: file.name, content, type: ext });
+          else toast.error(`Could not parse ${file.name}`);
+        }
         else { const text = await file.text(); const content = parseFileContent(text, file.name); parsed.push({ name: file.name, content, type: ext }); }
       } catch { toast.error(`Failed to read ${file.name}`); }
     }
-    setUploadedFiles((prev) => [...prev, ...parsed]);
-    toast.success(`${parsed.length} file(s) loaded — AI is analyzing automatically!`);
+    setUploadedFiles(parsed);
+    if (parsed.length > 0) toast.success(`${parsed.length} file(s) loaded — AI is analyzing automatically!`);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -109,7 +121,17 @@ const Analytics = () => {
 
   const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useFileDrop(processFiles);
 
-  const removeFile = (index: number) => { setUploadedFiles(prev => prev.filter((_, i) => i !== index)); };
+  const removeFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    setAiCharts([]);
+    setAiStory("");
+    setAiForecast("");
+    setAiSimulation("");
+    setAiCofounder("");
+    setAutoAnalyzeTriggered(false);
+    autoAnalyzeGuard.current = false;
+    setActiveTab("charts");
+  };
 
   const handleChartsGenerated = useCallback((charts: ChartData[]) => { setAiCharts(prev => [...prev, ...charts]); setActiveTab("charts"); }, []);
   const handleStoryGenerated = useCallback((story: string) => { setAiStory(story); }, []);
