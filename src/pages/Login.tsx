@@ -39,7 +39,7 @@ const Login = () => {
           return;
         }
         toast.success("Welcome back!");
-        navigate("/dashboard");
+        navigate("/analytics");
       }
     } catch (err: any) {
       toast.error(err.message || "Authentication failed");
