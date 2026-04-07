@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 const navLinks = [
   { to: "/", label: "Home" },
   { to: "/features", label: "Features" },
-  { to: "/dashboard", label: "Dashboard", highlight: true },
   { to: "/analytics", label: "Analytics", highlight: true },
   { to: "/contact", label: "Contact" },
 ];

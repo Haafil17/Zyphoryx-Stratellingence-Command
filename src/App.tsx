@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { FileStoreProvider } from "@/contexts/FileStoreContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -10,7 +10,6 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Features from "./pages/Features";
 import Contact from "./pages/Contact";
-import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
@@ -32,7 +31,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/features" element={<Features />} />
                 <Route path="/contact" element={<Contact />} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><Navigate to="/analytics" replace /></ProtectedRoute>} />
                 <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
