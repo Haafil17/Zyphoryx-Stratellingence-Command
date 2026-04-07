@@ -131,73 +131,7 @@ const Dashboard = () => {
     }
   }, [fileData, uploadedFiles.length, autoAnalyzeTriggered]);
 
-  const totalRevenue = revenueData.reduce((s, d) => s + d.revenue, 0);
-  const totalExpense = expenseData.reduce((s, d) => s + d.expense, 0);
-  const netProfit = totalRevenue - totalExpense;
-  const margin = totalRevenue > 0 ? ((1 - totalExpense / totalRevenue) * 100) : 0;
-  const avgRevenue = revenueData.length > 0 ? totalRevenue / revenueData.length : 0;
-  const avgExpense = expenseData.length > 0 ? totalExpense / expenseData.length : 0;
-  const maxRevenue = revenueData.length > 0 ? Math.max(...revenueData.map(d => d.revenue)) : 0;
-  const maxExpense = expenseData.length > 0 ? Math.max(...expenseData.map(d => d.expense)) : 0;
 
-  const formatValue = (v: number) => {
-    if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
-    if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
-    return v.toLocaleString();
-  };
-
-  // Auto-detect insights from real data
-  const autoInsights: { icon: typeof AlertCircle; color: string; bg: string; text: string }[] = [];
-  if (hasData) {
-    // Revenue trend detection
-    if (revenueData.length >= 3) {
-      const last3 = revenueData.slice(-3);
-      const isDecline = last3[2].revenue < last3[0].revenue;
-      const changePercent = last3[0].revenue > 0 ? Math.abs(((last3[2].revenue - last3[0].revenue) / last3[0].revenue) * 100).toFixed(1) : "0";
-      if (isDecline) {
-        autoInsights.push({ icon: AlertTriangle, color: "text-[hsl(340,75%,60%)]", bg: "kpi-card-pink", text: `⚠️ Revenue declined ${changePercent}% over the last 3 periods (${last3[0].month} → ${last3[2].month}).` });
-      } else {
-        autoInsights.push({ icon: TrendingUp, color: "text-[hsl(152,69%,45%)]", bg: "kpi-card-green", text: `📈 Revenue grew ${changePercent}% over the last 3 periods (${last3[0].month} → ${last3[2].month}).` });
-      }
-    }
-    // Expense vs revenue ratio
-    if (totalRevenue > 0 && totalExpense > 0) {
-      const ratio = (totalExpense / totalRevenue * 100).toFixed(1);
-      if (parseFloat(ratio) > 80) {
-        autoInsights.push({ icon: Flame, color: "text-[hsl(25,95%,58%)]", bg: "kpi-card-orange", text: `🔥 Expenses are ${ratio}% of revenue — profit margins are critically thin.` });
-      } else if (parseFloat(ratio) > 60) {
-        autoInsights.push({ icon: Eye, color: "text-[hsl(220,80%,60%)]", bg: "kpi-card-blue", text: `👁️ Expenses consume ${ratio}% of revenue. Monitor cost efficiency.` });
-      } else {
-        autoInsights.push({ icon: Award, color: "text-[hsl(152,69%,45%)]", bg: "kpi-card-green", text: `✅ Healthy cost ratio: expenses are only ${ratio}% of revenue.` });
-      }
-    }
-    // Peak period detection
-    if (revenueData.length > 1) {
-      const peakIdx = revenueData.reduce((best, d, i) => d.revenue > revenueData[best].revenue ? i : best, 0);
-      autoInsights.push({ icon: Sparkles, color: "text-[hsl(280,70%,65%)]", bg: "kpi-card-purple", text: `🏆 Peak revenue period: ${revenueData[peakIdx].month} with ${formatValue(revenueData[peakIdx].revenue)}.` });
-    }
-    // Expense spike detection
-    if (expenseData.length >= 2) {
-      for (let i = 1; i < expenseData.length; i++) {
-        const prev = expenseData[i-1].expense;
-        const curr = expenseData[i].expense;
-        if (prev > 0 && curr > prev * 1.3) {
-          const spike = ((curr - prev) / prev * 100).toFixed(0);
-          autoInsights.push({ icon: AlertCircle, color: "text-[hsl(25,95%,58%)]", bg: "kpi-card-orange", text: `⚡ Expense spike of ${spike}% detected in ${expenseData[i].month} vs ${expenseData[i-1].month}.` });
-          break; // Only show first spike
-        }
-      }
-    }
-  }
-
-  const kpis = hasData ? [
-    { label: "Total Revenue", value: formatValue(totalRevenue), icon: DollarSign, colorClass: "kpi-card-blue", iconColor: "text-[hsl(220,80%,60%)]", up: true },
-    { label: "Total Expenses", value: formatValue(totalExpense), icon: TrendingDown, colorClass: "kpi-card-orange", iconColor: "text-[hsl(25,95%,58%)]", up: false },
-    { label: "Net Profit", value: formatValue(netProfit), icon: Activity, colorClass: netProfit >= 0 ? "kpi-card-green" : "kpi-card-pink", iconColor: netProfit >= 0 ? "text-[hsl(152,69%,45%)]" : "text-[hsl(340,75%,60%)]", up: netProfit >= 0 },
-    { label: "Profit Margin", value: `${margin.toFixed(1)}%`, icon: Percent, colorClass: "kpi-card-purple", iconColor: "text-[hsl(280,70%,65%)]", up: margin > 0 },
-    { label: "Avg Revenue/Period", value: formatValue(avgRevenue), icon: Target, colorClass: "kpi-card-cyan", iconColor: "text-[hsl(200,80%,55%)]", up: true },
-    { label: "Peak Revenue", value: formatValue(maxRevenue), icon: ArrowUpRight, colorClass: "kpi-card-blue", iconColor: "text-[hsl(220,80%,60%)]", up: true },
-  ] : [];
 
   const findColumnByKeywords = (headers: string[], keywords: string[], excludeIdx?: number): number => {
     return headers.findIndex((h, i) => {
@@ -298,6 +232,69 @@ const Dashboard = () => {
   }, [uploadedFiles]);
 
   const hasData = revenueData.length > 0 || expenseData.length > 0;
+
+  const totalRevenue = revenueData.reduce((s, d) => s + d.revenue, 0);
+  const totalExpense = expenseData.reduce((s, d) => s + d.expense, 0);
+  const netProfit = totalRevenue - totalExpense;
+  const margin = totalRevenue > 0 ? ((1 - totalExpense / totalRevenue) * 100) : 0;
+  const avgRevenue = revenueData.length > 0 ? totalRevenue / revenueData.length : 0;
+  const avgExpense = expenseData.length > 0 ? totalExpense / expenseData.length : 0;
+  const maxRevenue = revenueData.length > 0 ? Math.max(...revenueData.map(d => d.revenue)) : 0;
+  const maxExpense = expenseData.length > 0 ? Math.max(...expenseData.map(d => d.expense)) : 0;
+
+  const formatValue = (v: number) => {
+    if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+    if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
+    return v.toLocaleString();
+  };
+
+  const autoInsights: { icon: typeof AlertCircle; color: string; bg: string; text: string }[] = [];
+  if (hasData) {
+    if (revenueData.length >= 3) {
+      const last3 = revenueData.slice(-3);
+      const isDecline = last3[2].revenue < last3[0].revenue;
+      const changePercent = last3[0].revenue > 0 ? Math.abs(((last3[2].revenue - last3[0].revenue) / last3[0].revenue) * 100).toFixed(1) : "0";
+      if (isDecline) {
+        autoInsights.push({ icon: AlertTriangle, color: "text-[hsl(340,75%,60%)]", bg: "kpi-card-pink", text: `⚠️ Revenue declined ${changePercent}% over the last 3 periods (${last3[0].month} → ${last3[2].month}).` });
+      } else {
+        autoInsights.push({ icon: TrendingUp, color: "text-[hsl(152,69%,45%)]", bg: "kpi-card-green", text: `📈 Revenue grew ${changePercent}% over the last 3 periods (${last3[0].month} → ${last3[2].month}).` });
+      }
+    }
+    if (totalRevenue > 0 && totalExpense > 0) {
+      const ratio = (totalExpense / totalRevenue * 100).toFixed(1);
+      if (parseFloat(ratio) > 80) {
+        autoInsights.push({ icon: Flame, color: "text-[hsl(25,95%,58%)]", bg: "kpi-card-orange", text: `🔥 Expenses are ${ratio}% of revenue — profit margins are critically thin.` });
+      } else if (parseFloat(ratio) > 60) {
+        autoInsights.push({ icon: Eye, color: "text-[hsl(220,80%,60%)]", bg: "kpi-card-blue", text: `👁️ Expenses consume ${ratio}% of revenue. Monitor cost efficiency.` });
+      } else {
+        autoInsights.push({ icon: Award, color: "text-[hsl(152,69%,45%)]", bg: "kpi-card-green", text: `✅ Healthy cost ratio: expenses are only ${ratio}% of revenue.` });
+      }
+    }
+    if (revenueData.length > 1) {
+      const peakIdx = revenueData.reduce((best, d, i) => d.revenue > revenueData[best].revenue ? i : best, 0);
+      autoInsights.push({ icon: Sparkles, color: "text-[hsl(280,70%,65%)]", bg: "kpi-card-purple", text: `🏆 Peak revenue period: ${revenueData[peakIdx].month} with ${formatValue(revenueData[peakIdx].revenue)}.` });
+    }
+    if (expenseData.length >= 2) {
+      for (let i = 1; i < expenseData.length; i++) {
+        const prev = expenseData[i-1].expense;
+        const curr = expenseData[i].expense;
+        if (prev > 0 && curr > prev * 1.3) {
+          const spike = ((curr - prev) / prev * 100).toFixed(0);
+          autoInsights.push({ icon: AlertCircle, color: "text-[hsl(25,95%,58%)]", bg: "kpi-card-orange", text: `⚡ Expense spike of ${spike}% detected in ${expenseData[i].month} vs ${expenseData[i-1].month}.` });
+          break;
+        }
+      }
+    }
+  }
+
+  const kpis = hasData ? [
+    { label: "Total Revenue", value: formatValue(totalRevenue), icon: DollarSign, colorClass: "kpi-card-blue", iconColor: "text-[hsl(220,80%,60%)]", up: true },
+    { label: "Total Expenses", value: formatValue(totalExpense), icon: TrendingDown, colorClass: "kpi-card-orange", iconColor: "text-[hsl(25,95%,58%)]", up: false },
+    { label: "Net Profit", value: formatValue(netProfit), icon: Activity, colorClass: netProfit >= 0 ? "kpi-card-green" : "kpi-card-pink", iconColor: netProfit >= 0 ? "text-[hsl(152,69%,45%)]" : "text-[hsl(340,75%,60%)]", up: netProfit >= 0 },
+    { label: "Profit Margin", value: `${margin.toFixed(1)}%`, icon: Percent, colorClass: "kpi-card-purple", iconColor: "text-[hsl(280,70%,65%)]", up: margin > 0 },
+    { label: "Avg Revenue/Period", value: formatValue(avgRevenue), icon: Target, colorClass: "kpi-card-cyan", iconColor: "text-[hsl(200,80%,55%)]", up: true },
+    { label: "Peak Revenue", value: formatValue(maxRevenue), icon: ArrowUpRight, colorClass: "kpi-card-blue", iconColor: "text-[hsl(220,80%,60%)]", up: true },
+  ] : [];
 
   const processFiles = async (files: File[]) => {
     if (!files.length) return;
