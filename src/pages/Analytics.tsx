@@ -650,10 +650,10 @@ const Analytics = () => {
       return;
     }
 
-    if (isAutoAnalyzing || hasAnalysis || lastAutoDataRef.current === fileData) return;
+    if (isAutoAnalyzing || lastAutoDataRef.current === fileData) return;
     lastAutoDataRef.current = fileData;
     void runAutoAnalysis(fileData);
-  }, [fileData, hasAnalysis, isAutoAnalyzing, runAutoAnalysis]);
+  }, [fileData, isAutoAnalyzing, runAutoAnalysis]);
 
   const processFiles = async (files: File[]) => {
     if (!files.length) return;
