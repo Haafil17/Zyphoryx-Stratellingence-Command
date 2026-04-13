@@ -624,16 +624,18 @@ const Analytics = () => {
   const exportData = hasData ? combinedData : (tableData?.rows || []);
   const exportHeaders = hasData ? ["month", "revenue", "expense"] : tableData?.headers;
 
-  const runAutoAnalysis = useCallback(async (sourceFileData: string) => {
+  const runAutoAnalysis = useCallback(async (sourceFileData: string, financial: boolean) => {
     if (!sourceFileData.trim()) return;
 
     const runId = Date.now();
     autoRunIdRef.current = runId;
     setIsAutoAnalyzing(true);
 
+    const prompt = financial ? AUTO_ANALYZE_FINANCIAL : AUTO_ANALYZE_GENERAL;
+
     let assistantSoFar = "";
     await streamAnalyticsChat({
-      messages: [{ role: "user", content: AUTO_ANALYZE_PROMPT }],
+      messages: [{ role: "user", content: prompt }],
       fileData: sourceFileData,
       onDelta: (chunk) => {
         assistantSoFar += chunk;
@@ -646,12 +648,14 @@ const Analytics = () => {
         const cleanText = text.trim();
         const sections = parseSections(cleanText);
 
-        setAiCharts(charts);
+        setAiCharts(financial ? charts : []);
         setAiStory(sections.story || sections.general || cleanText);
         setAiForecast(sections.forecast);
         setAiSimulation(sections.simulation);
         setAiCofounder(sections.cofounder);
-        setActiveTab("overview");
+        setAiSlideshow(sections.slideshow);
+        setAiFindings(sections.findings);
+        setActiveTab("story");
         toast.success("Automatic analysis is ready.");
       },
       onError: (error) => {
