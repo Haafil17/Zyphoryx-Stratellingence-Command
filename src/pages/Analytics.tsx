@@ -64,8 +64,10 @@ import ExportButtons from "@/components/ExportButtons";
 import SavedAnalysesPanel from "@/components/SavedAnalysesPanel";
 
 const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
-const AUTO_ANALYZE_PROMPT =
+const AUTO_ANALYZE_FINANCIAL =
   "Run the full autonomous analysis now. Use these exact sections in this order: ## DATA STORY, ## FORECAST, ## SIMULATION, ## STRATEGY. Generate 3 to 4 chart blocks using only exact values from the uploaded data. Include concise recommendations in STRATEGY.";
+const AUTO_ANALYZE_GENERAL =
+  "Run the full autonomous analysis now. This is NON-FINANCIAL data. Use these exact sections in this order: ## DATA STORY (minimum 600 words, very detailed), ## KEY FINDINGS (8-12 bullet points with specific numbers), ## SLIDESHOW (6-8 slides with titles, key points, and bullet points), ## RECOMMENDATIONS. Do NOT generate any chart blocks. Focus entirely on narrative analysis, findings, and presentation slides.";
 
 const COLORS = [
   "hsl(220,80%,60%)",
@@ -90,35 +92,36 @@ const TIPS = [
     icon: Lightbulb,
     color: "text-[hsl(220,80%,60%)]",
     bg: "kpi-card-blue",
-    text: "Upload one file that includes both revenue and expense columns for the strongest KPIs, charts, and profit analysis.",
+    text: "Upload ANY data — financial, surveys, HR, scientific, marketing, sports, or more. Zephoryx adapts automatically.",
   },
   {
     icon: Target,
     color: "text-[hsl(280,70%,65%)]",
     bg: "kpi-card-purple",
-    text: "Analysis runs automatically after upload — charts, story, forecast, simulation, and strategy are generated without prompting.",
+    text: "Analysis runs automatically after upload — stories, findings, slideshows, charts, forecasts, and recommendations generate without prompting.",
   },
   {
     icon: Zap,
     color: "text-[hsl(25,95%,58%)]",
     bg: "kpi-card-orange",
-    text: "Use the AI panel for follow-up questions only, like pricing changes, market expansion, or risk scenarios.",
+    text: "Financial data gets charts, KPIs, forecasts, and simulations. Non-financial data gets detailed stories, key findings, and slideshow presentations.",
   },
   {
     icon: Brain,
     color: "text-[hsl(340,75%,60%)]",
     bg: "kpi-card-pink",
-    text: "Recommendations and insight boxes update from your uploaded data, not from placeholder values or hardcoded examples.",
+    text: "Use the AI panel for follow-up questions: pricing changes, what-if scenarios, deeper dives, or custom analysis on any topic.",
   },
 ];
 
+const FINANCIAL_KEYWORDS = ["revenue", "sales", "income", "earning", "earnings", "turnover", "gross", "expense", "cost", "spending", "budget", "expenditure", "profit", "margin", "cogs", "cash flow", "roi"];
 const REVENUE_KEYWORDS = ["revenue", "sales", "income", "earning", "earnings", "turnover", "gross"];
 const EXPENSE_KEYWORDS = ["expense", "cost", "spending", "budget", "expenditure", "outflow", "cogs"];
 const AMOUNT_KEYWORDS = ["amount", "amt", "value", "total", "net"];
 const FILE_REVENUE_KEYWORDS = [...REVENUE_KEYWORDS, "receipt", "receipts"];
 const FILE_EXPENSE_KEYWORDS = [...EXPENSE_KEYWORDS, "expence", "expenses"];
 
-type TabKey = "overview" | "story" | "table" | "forecast" | "simulation" | "cofounder";
+type TabKey = "overview" | "story" | "table" | "forecast" | "simulation" | "cofounder" | "slideshow" | "findings";
 type StructuredRow = Record<string, string>;
 
 const parseNumericValue = (value: unknown): number => {
@@ -217,7 +220,7 @@ const findFirstNumericCol = (headers: string[], rows: StructuredRow[], excludeId
 };
 
 const parseSections = (fullText: string) => {
-  const result = { story: "", forecast: "", simulation: "", cofounder: "", general: "" };
+  const result = { story: "", forecast: "", simulation: "", cofounder: "", general: "", slideshow: "", findings: "" };
   const sectionMap: Record<string, keyof typeof result> = {
     "DATA STORY": "story",
     STORY: "story",
@@ -231,8 +234,14 @@ const parseSections = (fullText: string) => {
     STRATEGY: "cofounder",
     STRATEGIC: "cofounder",
     RECOMMENDATION: "cofounder",
+    RECOMMENDATIONS: "cofounder",
     DECISION: "cofounder",
     "CO-FOUNDER": "cofounder",
+    SLIDESHOW: "slideshow",
+    PRESENTATION: "slideshow",
+    SLIDES: "slideshow",
+    "KEY FINDINGS": "findings",
+    FINDINGS: "findings",
   };
 
   let currentSection: keyof typeof result = "general";
@@ -359,6 +368,8 @@ const Analytics = () => {
   const [aiForecast, setAiForecast] = useState("");
   const [aiSimulation, setAiSimulation] = useState("");
   const [aiCofounder, setAiCofounder] = useState("");
+  const [aiSlideshow, setAiSlideshow] = useState("");
+  const [aiFindings, setAiFindings] = useState("");
   const [uploading, setUploading] = useState(false);
   const [isAutoAnalyzing, setIsAutoAnalyzing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -453,7 +464,14 @@ const Analytics = () => {
   }, [expenseData, revenueData]);
 
   const hasData = revenueData.length > 0 || expenseData.length > 0;
-  const hasAnalysis = aiCharts.length > 0 || Boolean(aiStory || aiForecast || aiSimulation || aiCofounder);
+  const hasAnalysis = aiCharts.length > 0 || Boolean(aiStory || aiForecast || aiSimulation || aiCofounder || aiSlideshow || aiFindings);
+
+  // Detect if uploaded data is financial
+  const isFinancialData = useMemo(() => {
+    if (hasData) return true; // Revenue/expense columns were detected
+    const allContent = uploadedFiles.map(f => f.content).join(" ").toLowerCase();
+    return FINANCIAL_KEYWORDS.some(kw => allContent.includes(kw));
+  }, [uploadedFiles, hasData]);
   const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0);
   const totalExpense = expenseData.reduce((sum, item) => sum + item.expense, 0);
   const netProfit = totalRevenue - totalExpense;
@@ -606,16 +624,18 @@ const Analytics = () => {
   const exportData = hasData ? combinedData : (tableData?.rows || []);
   const exportHeaders = hasData ? ["month", "revenue", "expense"] : tableData?.headers;
 
-  const runAutoAnalysis = useCallback(async (sourceFileData: string) => {
+  const runAutoAnalysis = useCallback(async (sourceFileData: string, financial: boolean) => {
     if (!sourceFileData.trim()) return;
 
     const runId = Date.now();
     autoRunIdRef.current = runId;
     setIsAutoAnalyzing(true);
 
+    const prompt = financial ? AUTO_ANALYZE_FINANCIAL : AUTO_ANALYZE_GENERAL;
+
     let assistantSoFar = "";
     await streamAnalyticsChat({
-      messages: [{ role: "user", content: AUTO_ANALYZE_PROMPT }],
+      messages: [{ role: "user", content: prompt }],
       fileData: sourceFileData,
       onDelta: (chunk) => {
         assistantSoFar += chunk;
@@ -628,12 +648,14 @@ const Analytics = () => {
         const cleanText = text.trim();
         const sections = parseSections(cleanText);
 
-        setAiCharts(charts);
+        setAiCharts(financial ? charts : []);
         setAiStory(sections.story || sections.general || cleanText);
         setAiForecast(sections.forecast);
         setAiSimulation(sections.simulation);
         setAiCofounder(sections.cofounder);
-        setActiveTab("overview");
+        setAiSlideshow(sections.slideshow);
+        setAiFindings(sections.findings);
+        setActiveTab("story");
         toast.success("Automatic analysis is ready.");
       },
       onError: (error) => {
@@ -652,8 +674,8 @@ const Analytics = () => {
 
     if (isAutoAnalyzing || lastAutoDataRef.current === fileData) return;
     lastAutoDataRef.current = fileData;
-    void runAutoAnalysis(fileData);
-  }, [fileData, isAutoAnalyzing, runAutoAnalysis]);
+    void runAutoAnalysis(fileData, isFinancialData);
+  }, [fileData, isAutoAnalyzing, isFinancialData, runAutoAnalysis]);
 
   const processFiles = async (files: File[]) => {
     if (!files.length) return;
@@ -665,6 +687,8 @@ const Analytics = () => {
     setAiForecast("");
     setAiSimulation("");
     setAiCofounder("");
+    setAiSlideshow("");
+    setAiFindings("");
     setActiveTab("overview");
 
     const parsed: { name: string; content: string; type: string }[] = [];
@@ -729,6 +753,8 @@ const Analytics = () => {
     setAiForecast("");
     setAiSimulation("");
     setAiCofounder("");
+    setAiSlideshow("");
+    setAiFindings("");
     setActiveTab("overview");
   };
 
@@ -763,14 +789,22 @@ const Analytics = () => {
     return FileText;
   };
 
-  const tabs: { key: TabKey; icon: typeof BarChart3; label: string }[] = [
-    { key: "overview", icon: BarChart3, label: "Overview" },
-    { key: "story", icon: BookOpen, label: "Data Story" },
-    { key: "forecast", icon: TrendingUp, label: "Forecast" },
-    { key: "simulation", icon: Shuffle, label: "Simulation" },
-    { key: "cofounder", icon: Brain, label: "Strategy" },
-    { key: "table", icon: Table, label: "Data Table" },
-  ];
+  const tabs: { key: TabKey; icon: typeof BarChart3; label: string }[] = isFinancialData
+    ? [
+        { key: "overview", icon: BarChart3, label: "Overview" },
+        { key: "story", icon: BookOpen, label: "Data Story" },
+        { key: "forecast", icon: TrendingUp, label: "Forecast" },
+        { key: "simulation", icon: Shuffle, label: "Simulation" },
+        { key: "cofounder", icon: Brain, label: "Strategy" },
+        { key: "table", icon: Table, label: "Data Table" },
+      ]
+    : [
+        { key: "story", icon: BookOpen, label: "Data Story" },
+        { key: "findings", icon: Zap, label: "Key Findings" },
+        { key: "slideshow", icon: Layers, label: "Slideshow" },
+        { key: "cofounder", icon: Brain, label: "Recommendations" },
+        { key: "table", icon: Table, label: "Data Table" },
+      ];
 
   const renderMarkdownContent = (content: string, emptyIcon: typeof BookOpen, emptyTitle: string, emptyDesc: string) => {
     if (content) {
@@ -804,7 +838,7 @@ const Analytics = () => {
                 Analytics <span className="gradient-text">Command Center</span>
               </h1>
               <p className="text-base md:text-lg text-muted-foreground mt-3 max-w-3xl leading-relaxed font-medium">
-                Upload data once and Zephoryx automatically generates KPIs, real charts, insight boxes, recommendations, forecasts, simulations, and strategic analysis.
+                Upload any data — financial, surveys, HR, scientific, marketing, or anything else. Zephoryx automatically generates stories, findings, slideshows, charts, forecasts, and strategic analysis.
               </p>
             </div>
             {exportData.length > 0 && exportHeaders && (
@@ -1179,6 +1213,51 @@ const Analytics = () => {
                     Brain,
                     "No Strategic Analysis Yet",
                     uploadedFiles.length > 0 ? "Recommendations and strategic actions are being generated automatically." : "Upload data to get recommendations and decisions.",
+                  )}
+                </div>
+              )}
+              {activeTab === "findings" && (
+                <div className="glass-card p-8 min-h-[420px]">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Zap className="h-5 w-5 text-[hsl(25,95%,58%)]" />
+                    <h3 className="text-lg font-black text-foreground">Key Findings</h3>
+                  </div>
+                  {renderMarkdownContent(
+                    aiFindings,
+                    Zap,
+                    "No Findings Yet",
+                    uploadedFiles.length > 0 ? "Key findings are being extracted automatically from the uploaded data." : "Upload data to discover key findings.",
+                  )}
+                </div>
+              )}
+
+              {activeTab === "slideshow" && (
+                <div className="glass-card p-8 min-h-[420px]">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Layers className="h-5 w-5 text-[hsl(340,75%,60%)]" />
+                    <h3 className="text-lg font-black text-foreground">Slideshow Presentation</h3>
+                  </div>
+                  {aiSlideshow ? (
+                    <div className="space-y-6">
+                      {aiSlideshow.split(/###\s+Slide\s+\d+/i).filter(s => s.trim()).map((slide, i) => (
+                        <div key={i} className={`glass-card p-6 border ${["kpi-card-blue", "kpi-card-purple", "kpi-card-orange", "kpi-card-pink", "kpi-card-green", "kpi-card-cyan"][i % 6]}`}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full gradient-primary text-white text-sm font-black">{i + 1}</span>
+                          </div>
+                          <div className="prose prose-sm max-w-none [&_p]:mb-2 [&_p]:text-foreground [&_h1]:text-xl [&_h1]:font-black [&_h2]:text-lg [&_h2]:font-bold [&_h3]:text-base [&_h3]:font-bold [&_li]:text-foreground [&_strong]:text-foreground">
+                            <ReactMarkdown>{slide.trim()}</ReactMarkdown>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Layers className="h-16 w-16 text-muted-foreground mx-auto mb-5 opacity-20" />
+                      <h3 className="font-black mb-3 text-xl text-foreground">No Slideshow Yet</h3>
+                      <p className="text-base text-muted-foreground max-w-md mx-auto leading-relaxed font-medium">
+                        {uploadedFiles.length > 0 ? "Slideshow is being generated automatically from the uploaded data." : "Upload non-financial data to auto-generate a slideshow presentation."}
+                      </p>
+                    </div>
                   )}
                 </div>
               )}

@@ -42,7 +42,6 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is blocked
     const { data: profile } = await supabase
       .from("profiles")
       .select("blocked")
@@ -56,14 +55,20 @@ serve(async (req) => {
       });
     }
 
-    // Update last_used_at
     await supabase.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", keyRow.id);
 
     const { messages, fileData } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are Zephoryx AI — an elite enterprise analytics assistant. Analyze data provided and return insights in structured markdown with charts.
+    const systemPrompt = `You are Zephoryx AI — an elite universal data analytics and intelligence assistant.
+You handle ALL types of data — financial, scientific, survey, HR, marketing, operational, educational, medical, sports, social, IoT, logistics, and any domain.
+
+RULES:
+1. ONLY use data provided in the uploaded data section. NEVER invent numbers.
+2. For FINANCIAL data (revenue, sales, expense, cost, profit columns): provide Data Story, Forecast, Simulation, Strategy with charts.
+3. For NON-FINANCIAL data: provide a detailed Data Story (600+ words), Key Findings, Slideshow (6-8 slides), and Recommendations. Do NOT generate chart blocks for non-financial data.
+4. Always be thorough, specific, and cite exact values from the data.
 
 ${fileData ? `\nUSER'S UPLOADED DATA:\n${fileData}` : "\nNo data provided."}`;
 
