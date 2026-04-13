@@ -368,6 +368,8 @@ const Analytics = () => {
   const [aiForecast, setAiForecast] = useState("");
   const [aiSimulation, setAiSimulation] = useState("");
   const [aiCofounder, setAiCofounder] = useState("");
+  const [aiSlideshow, setAiSlideshow] = useState("");
+  const [aiFindings, setAiFindings] = useState("");
   const [uploading, setUploading] = useState(false);
   const [isAutoAnalyzing, setIsAutoAnalyzing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
