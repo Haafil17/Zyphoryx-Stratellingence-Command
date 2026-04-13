@@ -1262,7 +1262,7 @@ const Analytics = () => {
                 </div>
               )}
 
-
+              {activeTab === "table" && (
                 <div className="glass-card p-6 overflow-x-auto min-h-[420px]">
                   <h3 className="text-lg font-black mb-6 text-foreground flex items-center gap-2">
                     <Table className="h-5 w-5 text-[hsl(200,80%,55%)]" /> Data Table
