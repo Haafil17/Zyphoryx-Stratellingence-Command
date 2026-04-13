@@ -220,7 +220,7 @@ const findFirstNumericCol = (headers: string[], rows: StructuredRow[], excludeId
 };
 
 const parseSections = (fullText: string) => {
-  const result = { story: "", forecast: "", simulation: "", cofounder: "", general: "" };
+  const result = { story: "", forecast: "", simulation: "", cofounder: "", general: "", slideshow: "", findings: "" };
   const sectionMap: Record<string, keyof typeof result> = {
     "DATA STORY": "story",
     STORY: "story",
