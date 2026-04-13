@@ -464,7 +464,14 @@ const Analytics = () => {
   }, [expenseData, revenueData]);
 
   const hasData = revenueData.length > 0 || expenseData.length > 0;
-  const hasAnalysis = aiCharts.length > 0 || Boolean(aiStory || aiForecast || aiSimulation || aiCofounder);
+  const hasAnalysis = aiCharts.length > 0 || Boolean(aiStory || aiForecast || aiSimulation || aiCofounder || aiSlideshow || aiFindings);
+
+  // Detect if uploaded data is financial
+  const isFinancialData = useMemo(() => {
+    if (hasData) return true; // Revenue/expense columns were detected
+    const allContent = uploadedFiles.map(f => f.content).join(" ").toLowerCase();
+    return FINANCIAL_KEYWORDS.some(kw => allContent.includes(kw));
+  }, [uploadedFiles, hasData]);
   const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0);
   const totalExpense = expenseData.reduce((sum, item) => sum + item.expense, 0);
   const netProfit = totalRevenue - totalExpense;
