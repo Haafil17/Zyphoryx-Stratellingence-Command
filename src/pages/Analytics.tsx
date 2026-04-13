@@ -234,8 +234,14 @@ const parseSections = (fullText: string) => {
     STRATEGY: "cofounder",
     STRATEGIC: "cofounder",
     RECOMMENDATION: "cofounder",
+    RECOMMENDATIONS: "cofounder",
     DECISION: "cofounder",
     "CO-FOUNDER": "cofounder",
+    SLIDESHOW: "slideshow",
+    PRESENTATION: "slideshow",
+    SLIDES: "slideshow",
+    "KEY FINDINGS": "findings",
+    FINDINGS: "findings",
   };
 
   let currentSection: keyof typeof result = "general";
