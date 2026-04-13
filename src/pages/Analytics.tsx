@@ -92,25 +92,25 @@ const TIPS = [
     icon: Lightbulb,
     color: "text-[hsl(220,80%,60%)]",
     bg: "kpi-card-blue",
-    text: "Upload one file that includes both revenue and expense columns for the strongest KPIs, charts, and profit analysis.",
+    text: "Upload ANY data — financial, surveys, HR, scientific, marketing, sports, or more. Zephoryx adapts automatically.",
   },
   {
     icon: Target,
     color: "text-[hsl(280,70%,65%)]",
     bg: "kpi-card-purple",
-    text: "Analysis runs automatically after upload — charts, story, forecast, simulation, and strategy are generated without prompting.",
+    text: "Analysis runs automatically after upload — stories, findings, slideshows, charts, forecasts, and recommendations generate without prompting.",
   },
   {
     icon: Zap,
     color: "text-[hsl(25,95%,58%)]",
     bg: "kpi-card-orange",
-    text: "Use the AI panel for follow-up questions only, like pricing changes, market expansion, or risk scenarios.",
+    text: "Financial data gets charts, KPIs, forecasts, and simulations. Non-financial data gets detailed stories, key findings, and slideshow presentations.",
   },
   {
     icon: Brain,
     color: "text-[hsl(340,75%,60%)]",
     bg: "kpi-card-pink",
-    text: "Recommendations and insight boxes update from your uploaded data, not from placeholder values or hardcoded examples.",
+    text: "Use the AI panel for follow-up questions: pricing changes, what-if scenarios, deeper dives, or custom analysis on any topic.",
   },
 ];
 
