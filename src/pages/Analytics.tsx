@@ -114,6 +114,7 @@ const TIPS = [
   },
 ];
 
+const FINANCIAL_KEYWORDS = ["revenue", "sales", "income", "earning", "earnings", "turnover", "gross", "expense", "cost", "spending", "budget", "expenditure", "profit", "margin", "cogs", "cash flow", "roi"];
 const REVENUE_KEYWORDS = ["revenue", "sales", "income", "earning", "earnings", "turnover", "gross"];
 const EXPENSE_KEYWORDS = ["expense", "cost", "spending", "budget", "expenditure", "outflow", "cogs"];
 const AMOUNT_KEYWORDS = ["amount", "amt", "value", "total", "net"];
