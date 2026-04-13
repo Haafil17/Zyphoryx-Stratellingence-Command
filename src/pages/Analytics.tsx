@@ -838,7 +838,7 @@ const Analytics = () => {
                 Analytics <span className="gradient-text">Command Center</span>
               </h1>
               <p className="text-base md:text-lg text-muted-foreground mt-3 max-w-3xl leading-relaxed font-medium">
-                Upload data once and Zephoryx automatically generates KPIs, real charts, insight boxes, recommendations, forecasts, simulations, and strategic analysis.
+                Upload any data — financial, surveys, HR, scientific, marketing, or anything else. Zephoryx automatically generates stories, findings, slideshows, charts, forecasts, and strategic analysis.
               </p>
             </div>
             {exportData.length > 0 && exportHeaders && (
