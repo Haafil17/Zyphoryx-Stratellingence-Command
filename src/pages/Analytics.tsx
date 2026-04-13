@@ -121,7 +121,7 @@ const AMOUNT_KEYWORDS = ["amount", "amt", "value", "total", "net"];
 const FILE_REVENUE_KEYWORDS = [...REVENUE_KEYWORDS, "receipt", "receipts"];
 const FILE_EXPENSE_KEYWORDS = [...EXPENSE_KEYWORDS, "expence", "expenses"];
 
-type TabKey = "overview" | "story" | "table" | "forecast" | "simulation" | "cofounder";
+type TabKey = "overview" | "story" | "table" | "forecast" | "simulation" | "cofounder" | "slideshow" | "findings";
 type StructuredRow = Record<string, string>;
 
 const parseNumericValue = (value: unknown): number => {
