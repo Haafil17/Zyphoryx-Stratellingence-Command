@@ -674,8 +674,8 @@ const Analytics = () => {
 
     if (isAutoAnalyzing || lastAutoDataRef.current === fileData) return;
     lastAutoDataRef.current = fileData;
-    void runAutoAnalysis(fileData);
-  }, [fileData, isAutoAnalyzing, runAutoAnalysis]);
+    void runAutoAnalysis(fileData, isFinancialData);
+  }, [fileData, isAutoAnalyzing, isFinancialData, runAutoAnalysis]);
 
   const processFiles = async (files: File[]) => {
     if (!files.length) return;
