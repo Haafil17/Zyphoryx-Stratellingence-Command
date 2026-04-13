@@ -64,8 +64,10 @@ import ExportButtons from "@/components/ExportButtons";
 import SavedAnalysesPanel from "@/components/SavedAnalysesPanel";
 
 const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
-const AUTO_ANALYZE_PROMPT =
+const AUTO_ANALYZE_FINANCIAL =
   "Run the full autonomous analysis now. Use these exact sections in this order: ## DATA STORY, ## FORECAST, ## SIMULATION, ## STRATEGY. Generate 3 to 4 chart blocks using only exact values from the uploaded data. Include concise recommendations in STRATEGY.";
+const AUTO_ANALYZE_GENERAL =
+  "Run the full autonomous analysis now. This is NON-FINANCIAL data. Use these exact sections in this order: ## DATA STORY (minimum 600 words, very detailed), ## KEY FINDINGS (8-12 bullet points with specific numbers), ## SLIDESHOW (6-8 slides with titles, key points, and bullet points), ## RECOMMENDATIONS. Do NOT generate any chart blocks. Focus entirely on narrative analysis, findings, and presentation slides.";
 
 const COLORS = [
   "hsl(220,80%,60%)",
