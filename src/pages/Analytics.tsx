@@ -687,6 +687,8 @@ const Analytics = () => {
     setAiForecast("");
     setAiSimulation("");
     setAiCofounder("");
+    setAiSlideshow("");
+    setAiFindings("");
     setActiveTab("overview");
 
     const parsed: { name: string; content: string; type: string }[] = [];
@@ -751,6 +753,8 @@ const Analytics = () => {
     setAiForecast("");
     setAiSimulation("");
     setAiCofounder("");
+    setAiSlideshow("");
+    setAiFindings("");
     setActiveTab("overview");
   };
 
@@ -785,14 +789,22 @@ const Analytics = () => {
     return FileText;
   };
 
-  const tabs: { key: TabKey; icon: typeof BarChart3; label: string }[] = [
-    { key: "overview", icon: BarChart3, label: "Overview" },
-    { key: "story", icon: BookOpen, label: "Data Story" },
-    { key: "forecast", icon: TrendingUp, label: "Forecast" },
-    { key: "simulation", icon: Shuffle, label: "Simulation" },
-    { key: "cofounder", icon: Brain, label: "Strategy" },
-    { key: "table", icon: Table, label: "Data Table" },
-  ];
+  const tabs: { key: TabKey; icon: typeof BarChart3; label: string }[] = isFinancialData
+    ? [
+        { key: "overview", icon: BarChart3, label: "Overview" },
+        { key: "story", icon: BookOpen, label: "Data Story" },
+        { key: "forecast", icon: TrendingUp, label: "Forecast" },
+        { key: "simulation", icon: Shuffle, label: "Simulation" },
+        { key: "cofounder", icon: Brain, label: "Strategy" },
+        { key: "table", icon: Table, label: "Data Table" },
+      ]
+    : [
+        { key: "story", icon: BookOpen, label: "Data Story" },
+        { key: "findings", icon: Zap, label: "Key Findings" },
+        { key: "slideshow", icon: Layers, label: "Slideshow" },
+        { key: "cofounder", icon: Brain, label: "Recommendations" },
+        { key: "table", icon: Table, label: "Data Table" },
+      ];
 
   const renderMarkdownContent = (content: string, emptyIcon: typeof BookOpen, emptyTitle: string, emptyDesc: string) => {
     if (content) {
