@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut, User, Shield } from "lucide-react";
+import { Menu, X, LogOut, User, Shield, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import logo from "@/assets/logo.png";
@@ -11,6 +11,7 @@ const navLinks = [
   { to: "/", label: "Home" },
   { to: "/features", label: "Features" },
   { to: "/analytics", label: "Analytics", highlight: true },
+  { to: "/api-keys", label: "API Keys" },
   { to: "/contact", label: "Contact" },
 ];
 
