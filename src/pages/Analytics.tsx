@@ -1216,8 +1216,53 @@ const Analytics = () => {
                   )}
                 </div>
               )}
+              {activeTab === "findings" && (
+                <div className="glass-card p-8 min-h-[420px]">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Zap className="h-5 w-5 text-[hsl(25,95%,58%)]" />
+                    <h3 className="text-lg font-black text-foreground">Key Findings</h3>
+                  </div>
+                  {renderMarkdownContent(
+                    aiFindings,
+                    Zap,
+                    "No Findings Yet",
+                    uploadedFiles.length > 0 ? "Key findings are being extracted automatically from the uploaded data." : "Upload data to discover key findings.",
+                  )}
+                </div>
+              )}
 
-              {activeTab === "table" && (
+              {activeTab === "slideshow" && (
+                <div className="glass-card p-8 min-h-[420px]">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Layers className="h-5 w-5 text-[hsl(340,75%,60%)]" />
+                    <h3 className="text-lg font-black text-foreground">Slideshow Presentation</h3>
+                  </div>
+                  {aiSlideshow ? (
+                    <div className="space-y-6">
+                      {aiSlideshow.split(/###\s+Slide\s+\d+/i).filter(s => s.trim()).map((slide, i) => (
+                        <div key={i} className={`glass-card p-6 border ${["kpi-card-blue", "kpi-card-purple", "kpi-card-orange", "kpi-card-pink", "kpi-card-green", "kpi-card-cyan"][i % 6]}`}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full gradient-primary text-white text-sm font-black">{i + 1}</span>
+                          </div>
+                          <div className="prose prose-sm max-w-none [&_p]:mb-2 [&_p]:text-foreground [&_h1]:text-xl [&_h1]:font-black [&_h2]:text-lg [&_h2]:font-bold [&_h3]:text-base [&_h3]:font-bold [&_li]:text-foreground [&_strong]:text-foreground">
+                            <ReactMarkdown>{slide.trim()}</ReactMarkdown>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Layers className="h-16 w-16 text-muted-foreground mx-auto mb-5 opacity-20" />
+                      <h3 className="font-black mb-3 text-xl text-foreground">No Slideshow Yet</h3>
+                      <p className="text-base text-muted-foreground max-w-md mx-auto leading-relaxed font-medium">
+                        {uploadedFiles.length > 0 ? "Slideshow is being generated automatically from the uploaded data." : "Upload non-financial data to auto-generate a slideshow presentation."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+
                 <div className="glass-card p-6 overflow-x-auto min-h-[420px]">
                   <h3 className="text-lg font-black mb-6 text-foreground flex items-center gap-2">
                     <Table className="h-5 w-5 text-[hsl(200,80%,55%)]" /> Data Table
