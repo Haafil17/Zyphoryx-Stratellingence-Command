@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Shield, Users, Settings, LogOut, Brain, BarChart3,
-  Activity, Database, Loader2, AlertTriangle, Ban, UserCheck, ShieldCheck
+  Activity, Database, Loader2, AlertTriangle, Ban, UserCheck, ShieldCheck, Key
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -200,8 +200,8 @@ const Admin = () => {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
+              { label: "API Keys", href: "/admin/api-keys", icon: Key },
               { label: "View Analytics", href: "/analytics", icon: BarChart3 },
-              { label: "View Dashboard", href: "/dashboard", icon: Activity },
               { label: "Refresh Users", href: "#refresh", icon: Users },
               { label: "Platform Settings", href: "#", icon: Settings },
             ].map((action) => (
