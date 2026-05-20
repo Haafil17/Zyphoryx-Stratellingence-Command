@@ -11,7 +11,6 @@ const navLinks = [
   { to: "/", label: "Home" },
   { to: "/features", label: "Features" },
   { to: "/analytics", label: "Analytics", highlight: true },
-  { to: "/api-keys", label: "API Keys" },
   { to: "/contact", label: "Contact" },
 ];
 

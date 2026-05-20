@@ -37,7 +37,8 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-                <Route path="/api-keys" element={<ProtectedRoute><ApiKeys /></ProtectedRoute>} />
+                <Route path="/admin/api-keys" element={<ProtectedRoute><ApiKeys /></ProtectedRoute>} />
+                <Route path="/api-keys" element={<Navigate to="/admin/api-keys" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>

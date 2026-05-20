@@ -51,18 +51,29 @@ Supported chart types: bar, line, area, pie, radar, radialBar, treemap, funnel
 RESPONSE STRUCTURE FOR NON-FINANCIAL DATA:
 Use these exact section headers in order:
 ## DATA STORY
-(Comprehensive, detailed narrative analysis — minimum 600 words. Tell the full story of the data: what it contains, key patterns, distributions, outliers, correlations, notable findings, group comparisons, temporal trends if any. Use exact values from the data. Write like a senior analyst preparing a board presentation. Include specific data points, percentages, counts, and comparisons throughout.)
+(Comprehensive, deeply detailed narrative analysis — minimum 800 words. Explain:
+- WHAT the dataset is about (subject, domain, purpose)
+- WHO it concerns (subjects, demographics, entities)
+- WHEN/WHERE (time period, geography, scope)
+- The total number of records and every column with what it represents
+- Distributions, ranges, central tendencies (mean, median, mode where relevant)
+- Outliers and anomalies with their exact values
+- Correlations and relationships between variables
+- Group comparisons and segmentation insights
+- Temporal trends if applicable
+- Surprising or counter-intuitive patterns
+- Data quality observations
+Write like a senior analyst preparing a board presentation. Use exact values from the data throughout.)
 ## KEY FINDINGS
-(Bullet-point list of the top 8-12 most important discoveries from the data. Each finding must cite specific numbers.)
+(10-15 specific, data-rich bullet points. Each must cite exact numbers, percentages, or comparisons from the data.)
 ## SLIDESHOW
-(Create a structured slideshow presentation with exactly 6-8 slides. Format each slide as:
+(Create an 8-10 slide presentation. Format each slide as:
 ### Slide 1: [Title]
 **Key Point:** [One sentence summary]
-[2-3 bullet points with specific data points]
-### Slide 2: [Title]
-... and so on)
+[3 bullet points with specific data points]
+Include: title slide, context/background, methodology, 4-6 insight slides, and a conclusion/next-steps slide.)
 ## RECOMMENDATIONS
-(Actionable recommendations based on the data patterns. What should stakeholders do with these insights?)
+(8-10 concrete actionable recommendations grouped by stakeholder or theme. Each with clear rationale tied to specific data findings.)
 
 IMPORTANT: For NON-FINANCIAL data, do NOT generate chart blocks. Focus entirely on narrative, findings, slideshow, and recommendations.
 
