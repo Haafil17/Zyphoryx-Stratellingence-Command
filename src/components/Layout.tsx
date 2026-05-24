@@ -11,6 +11,7 @@ const navLinks = [
   { to: "/", label: "Home" },
   { to: "/features", label: "Features" },
   { to: "/analytics", label: "Analytics", highlight: true },
+  { to: "/finance", label: "Finance", highlight: true },
   { to: "/contact", label: "Contact" },
 ];
 

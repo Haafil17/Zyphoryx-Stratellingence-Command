@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import ApiKeys from "./pages/ApiKeys";
+import FinanceManager from "./pages/FinanceManager";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Navigate to="/analytics" replace /></ProtectedRoute>} />
                 <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                <Route path="/finance" element={<ProtectedRoute><FinanceManager /></ProtectedRoute>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
