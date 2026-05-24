@@ -44,6 +44,39 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_entries: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          entry_date: string
+          id: string
+          type: Database["public"]["Enums"]["finance_entry_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          id?: string
+          type: Database["public"]["Enums"]["finance_entry_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          id?: string
+          type?: Database["public"]["Enums"]["finance_entry_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           blocked: boolean
@@ -143,6 +176,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      finance_entry_type: "revenue" | "expense"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -271,6 +305,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      finance_entry_type: ["revenue", "expense"],
     },
   },
 } as const
