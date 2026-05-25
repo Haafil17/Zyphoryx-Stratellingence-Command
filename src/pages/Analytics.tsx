@@ -868,22 +868,39 @@ const Analytics = () => {
     return FileText;
   };
 
-  const tabs: { key: TabKey; icon: typeof BarChart3; label: string }[] = isFinancialData
-    ? [
-        { key: "overview", icon: BarChart3, label: "Overview" },
-        { key: "story", icon: BookOpen, label: "Data Story" },
-        { key: "forecast", icon: TrendingUp, label: "Forecast" },
-        { key: "simulation", icon: Shuffle, label: "Simulation" },
-        { key: "cofounder", icon: Brain, label: "Strategy" },
-        { key: "table", icon: Table, label: "Data Table" },
-      ]
-    : [
-        { key: "story", icon: BookOpen, label: "Data Story" },
-        { key: "findings", icon: Zap, label: "Key Findings" },
-        { key: "slideshow", icon: Layers, label: "Slideshow" },
-        { key: "cofounder", icon: Brain, label: "Recommendations" },
-        { key: "table", icon: Table, label: "Data Table" },
-      ];
+  const tabsByType: Record<typeof contentType, { key: TabKey; icon: typeof BarChart3; label: string }[]> = {
+    empty: [],
+    financial: [
+      { key: "overview", icon: BarChart3, label: "Overview" },
+      { key: "story", icon: BookOpen, label: "Data Story" },
+      { key: "forecast", icon: TrendingUp, label: "Forecast" },
+      { key: "simulation", icon: Shuffle, label: "Simulation" },
+      { key: "cofounder", icon: Brain, label: "Strategy" },
+      { key: "table", icon: Table, label: "Data Table" },
+    ],
+    dataset: [
+      { key: "story", icon: BookOpen, label: "Data Story" },
+      { key: "findings", icon: Zap, label: "Key Findings" },
+      { key: "slideshow", icon: Layers, label: "Slideshow" },
+      { key: "cofounder", icon: Brain, label: "Recommendations" },
+      { key: "table", icon: Table, label: "Data Table" },
+    ],
+    code: [
+      { key: "code", icon: FileText, label: "Code Explanation" },
+      { key: "cofounder", icon: Brain, label: "Improvements" },
+    ],
+    document: [
+      { key: "document", icon: BookOpen, label: "Document Analysis" },
+      { key: "findings", icon: Zap, label: "Key Points" },
+      { key: "cofounder", icon: Brain, label: "Takeaways" },
+    ],
+    image: [
+      { key: "image", icon: FileImage, label: "Image Analysis" },
+      { key: "overview", icon: BarChart3, label: "Detected Charts" },
+      { key: "cofounder", icon: Brain, label: "Recommendations" },
+    ],
+  };
+  const tabs = tabsByType[contentType] || tabsByType.dataset;
 
   const renderMarkdownContent = (content: string, emptyIcon: typeof BookOpen, emptyTitle: string, emptyDesc: string) => {
     if (content) {
