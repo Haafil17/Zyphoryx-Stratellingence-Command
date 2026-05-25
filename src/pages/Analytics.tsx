@@ -503,14 +503,24 @@ const Analytics = () => {
   }, [expenseData, revenueData]);
 
   const hasData = revenueData.length > 0 || expenseData.length > 0;
-  const hasAnalysis = aiCharts.length > 0 || Boolean(aiStory || aiForecast || aiSimulation || aiCofounder || aiSlideshow || aiFindings);
+  const hasAnalysis = aiCharts.length > 0 || Boolean(aiStory || aiForecast || aiSimulation || aiCofounder || aiSlideshow || aiFindings || aiCode || aiDocument || aiImage);
 
-  // Detect if uploaded data is financial
-  const isFinancialData = useMemo(() => {
-    if (hasData) return true; // Revenue/expense columns were detected
+  // Detect the dominant content type
+  const contentType = useMemo<"financial" | "dataset" | "code" | "document" | "image" | "empty">(() => {
+    if (uploadedFiles.length === 0) return "empty";
+    const exts = uploadedFiles.map(f => f.type.toLowerCase());
+    const imageCount = exts.filter(e => IMAGE_EXTS.includes(e)).length;
+    const codeCount = exts.filter(e => CODE_EXTS_SET.has(e)).length;
+    if (imageCount > 0 && imageCount >= uploadedFiles.length / 2) return "image";
+    if (codeCount > 0 && codeCount >= uploadedFiles.length / 2) return "code";
+    if (hasData) return "financial";
     const allContent = uploadedFiles.map(f => f.content).join(" ").toLowerCase();
-    return FINANCIAL_KEYWORDS.some(kw => allContent.includes(kw));
-  }, [uploadedFiles, hasData]);
+    if (FINANCIAL_KEYWORDS.some(kw => allContent.includes(kw)) && tableData) return "financial";
+    if (tableData) return "dataset";
+    return "document";
+  }, [uploadedFiles, hasData, tableData]);
+
+  const isFinancialData = contentType === "financial";
   const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0);
   const totalExpense = expenseData.reduce((sum, item) => sum + item.expense, 0);
   const netProfit = totalRevenue - totalExpense;
