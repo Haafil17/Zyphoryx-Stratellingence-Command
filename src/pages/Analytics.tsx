@@ -1390,7 +1390,63 @@ const Analytics = () => {
                   )}
                 </div>
               )}
+
+              {activeTab === "code" && (
+                <div className="glass-card p-8 min-h-[420px]">
+                  <div className="flex items-center gap-2 mb-6">
+                    <FileText className="h-5 w-5 text-[hsl(220,80%,60%)]" />
+                    <h3 className="text-lg font-black text-foreground">Code Explanation & Review</h3>
+                  </div>
+                  {renderMarkdownContent(
+                    aiCode,
+                    FileText,
+                    "No Code Analysis Yet",
+                    uploadedFiles.length > 0 ? "Walking through your code now — architecture, function-by-function explanation, bugs and refactor suggestions." : "Upload source code files (.js, .ts, .py, .java, .cpp, .go, .rs, .sql, etc.) to get a full code review.",
+                  )}
+                </div>
+              )}
+
+              {activeTab === "document" && (
+                <div className="glass-card p-8 min-h-[420px]">
+                  <div className="flex items-center gap-2 mb-6">
+                    <BookOpen className="h-5 w-5 text-[hsl(280,70%,65%)]" />
+                    <h3 className="text-lg font-black text-foreground">Document Analysis</h3>
+                  </div>
+                  {renderMarkdownContent(
+                    aiDocument,
+                    BookOpen,
+                    "No Document Analysis Yet",
+                    uploadedFiles.length > 0 ? "Summarizing your document, extracting entities, key points, and takeaways." : "Upload a PDF, TXT, or MD document to get a deep summary, entity extraction, and Q&A.",
+                  )}
+                </div>
+              )}
+
+              {activeTab === "image" && (
+                <div className="glass-card p-8 min-h-[420px] space-y-6">
+                  <div className="flex items-center gap-2">
+                    <FileImage className="h-5 w-5 text-[hsl(25,95%,58%)]" />
+                    <h3 className="text-lg font-black text-foreground">Image Analysis (Vision)</h3>
+                  </div>
+                  {imagePayloads.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {imagePayloads.map((img) => (
+                        <div key={img.name} className="rounded-xl overflow-hidden border border-border/60 bg-secondary/30">
+                          <img src={img.dataUrl} alt={img.name} className="w-full h-40 object-cover" />
+                          <p className="text-xs px-3 py-2 text-muted-foreground font-bold truncate">{img.name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {renderMarkdownContent(
+                    aiImage,
+                    FileImage,
+                    "No Image Analysis Yet",
+                    uploadedFiles.length > 0 ? "AI vision is describing your images, extracting text, and reading any charts." : "Upload images (PNG, JPG, WebP, GIF) — AI vision will describe them, OCR text, and extract chart data.",
+                  )}
+                </div>
+              )}
             </div>
+
 
             <div className="space-y-4">
               <AIChatPanel
