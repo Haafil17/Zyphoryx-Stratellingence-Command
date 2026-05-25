@@ -43,15 +43,19 @@ export function parseStructuredData(content: string): StructuredData | null {
   }
 }
 
+export type ImagePayload = { name: string; dataUrl: string };
+
 export async function streamAnalyticsChat({
   messages,
   fileData,
+  images,
   onDelta,
   onDone,
   onError,
 }: {
   messages: ChatMessage[];
   fileData: string;
+  images?: ImagePayload[];
   onDelta: (text: string) => void;
   onDone: () => void;
   onError: (error: string) => void;
@@ -63,7 +67,7 @@ export async function streamAnalyticsChat({
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages, fileData }),
+      body: JSON.stringify({ messages, fileData, images: images ?? [] }),
     });
 
     if (!resp.ok) {
