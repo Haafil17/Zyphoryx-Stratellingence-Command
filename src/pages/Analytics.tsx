@@ -63,11 +63,17 @@ import { useFileDrop } from "@/hooks/use-file-drop";
 import ExportButtons from "@/components/ExportButtons";
 import SavedAnalysesPanel from "@/components/SavedAnalysesPanel";
 
-const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
+const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.cc,.c,.h,.hpp,.cs,.go,.rs,.rb,.php,.swift,.kt,.scala,.sh,.bash,.sql,.html,.htm,.css,.scss,.sass,.less,.vue,.svelte,.md,.yaml,.yml,.toml,.xml,.r,.lua,.dart";
 const AUTO_ANALYZE_FINANCIAL =
-  "Run the full autonomous analysis now. Use these exact sections in this order: ## DATA STORY, ## FORECAST, ## SIMULATION, ## STRATEGY. Generate 3 to 4 chart blocks using only exact values from the uploaded data. Include concise recommendations in STRATEGY.";
+  "Run the full autonomous analysis now. This is FINANCIAL data. Use these exact sections in this order: ## DATA STORY, ## FORECAST, ## SIMULATION, ## STRATEGY. Generate 3 to 4 chart blocks using only exact values from the uploaded data.";
 const AUTO_ANALYZE_GENERAL =
-  "Run the full autonomous analysis now. This is NON-FINANCIAL data. Use these exact sections in this order: ## DATA STORY (minimum 800 words — explain WHAT the dataset is about, WHO it concerns, WHY it matters, the time period or scope, total records, columns and what each represents, distributions, outliers, correlations, group comparisons, demographic or category breakdowns, temporal trends, surprising patterns, data quality notes, and meaningful interpretation of every key field), ## KEY FINDINGS (10-15 deep bullet points, each citing specific numbers, percentages, and comparisons from the actual data), ## SLIDESHOW (8-10 slides — title slide, context slide, methodology slide, 4-6 insight slides each with title + key point + 3 bullet points with data, and a conclusion slide), ## RECOMMENDATIONS (8-10 concrete actionable recommendations grouped by stakeholder or theme, each with rationale tied to the data). Do NOT generate any chart blocks. Focus entirely on rich narrative storytelling, deep findings, and a complete presentation.";
+  "Run the full autonomous analysis now. This is NON-FINANCIAL structured DATASET data. Use these exact sections in this order: ## DATA STORY (800+ words), ## KEY FINDINGS (10-15 bullets with exact numbers), ## SLIDESHOW (8-10 slides), ## RECOMMENDATIONS (8-10 actions). Do NOT generate chart blocks.";
+const AUTO_ANALYZE_CODE =
+  "Run the full autonomous analysis now. This is SOURCE CODE. Use these exact sections in this order: ## CODE OVERVIEW, ## ARCHITECTURE & STRUCTURE, ## LINE-BY-LINE / FUNCTION EXPLANATION (walk through every function with fenced code), ## ISSUES & BUGS, ## IMPROVEMENT SUGGESTIONS (with BEFORE/AFTER snippets), ## COMPLEXITY & QUALITY METRICS. Be exhaustive and quote the actual code.";
+const AUTO_ANALYZE_DOCUMENT =
+  "Run the full autonomous analysis now. This is a DOCUMENT (prose). Use these exact sections in this order: ## DOCUMENT SUMMARY (TL;DR + 600+ word summary), ## KEY POINTS (10-15 bullets), ## ENTITIES & FACTS (markdown table), ## SENTIMENT & TONE, ## QUESTIONS THIS DOCUMENT ANSWERS (8-12 Q&A), ## ACTION ITEMS / TAKEAWAYS.";
+const AUTO_ANALYZE_IMAGE =
+  "Run the full autonomous analysis now on the attached IMAGE(S). Use these exact sections in this order: ## IMAGE DESCRIPTION (detailed per image), ## OBJECTS & TEXT DETECTED (with OCR-quoted text), ## CHART/DIAGRAM DATA (extract into a markdown table and emit a ```chart``` block if the image contains a chart), ## CONTEXT & INTERPRETATION, ## RECOMMENDATIONS.";
 
 const COLORS = [
   "hsl(220,80%,60%)",
