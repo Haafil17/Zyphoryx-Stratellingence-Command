@@ -754,17 +754,26 @@ const Analytics = () => {
     setAiCofounder("");
     setAiSlideshow("");
     setAiFindings("");
+    setAiCode("");
+    setAiDocument("");
+    setAiImage("");
+    setImagePayloads([]);
     setActiveTab("overview");
 
     const parsed: { name: string; content: string; type: string }[] = [];
+    const newImages: { name: string; dataUrl: string }[] = [];
 
     for (const file of files) {
       const ext = file.name.split(".").pop()?.toLowerCase() || "";
-      const isImage = ["jpeg", "jpg", "png", "gif", "webp", "svg"].includes(ext);
+      const isImg = IMAGE_EXTS.includes(ext);
       const isExcel = ["xlsx", "xls"].includes(ext);
 
       try {
-        if (isImage) {
+        if (isImg) {
+          try {
+            const dataUrl = await fileToDataUrl(file);
+            newImages.push({ name: file.name, dataUrl });
+          } catch { /* ignore */ }
           parsed.push({ name: file.name, content: `[Image: ${file.name}]`, type: ext });
           continue;
         }
@@ -794,6 +803,7 @@ const Analytics = () => {
     }
 
     setUploadedFiles(parsed);
+    setImagePayloads(newImages);
     setUploading(false);
 
     if (parsed.length > 0) {
@@ -813,6 +823,7 @@ const Analytics = () => {
   const removeFile = (index: number) => {
     lastAutoDataRef.current = "";
     setUploadedFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index));
+    setImagePayloads([]);
     setAiCharts([]);
     setAiStory("");
     setAiForecast("");
@@ -820,6 +831,9 @@ const Analytics = () => {
     setAiCofounder("");
     setAiSlideshow("");
     setAiFindings("");
+    setAiCode("");
+    setAiDocument("");
+    setAiImage("");
     setActiveTab("overview");
   };
 
