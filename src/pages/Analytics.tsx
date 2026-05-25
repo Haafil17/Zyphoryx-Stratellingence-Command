@@ -236,7 +236,7 @@ const findFirstNumericCol = (headers: string[], rows: StructuredRow[], excludeId
 };
 
 const parseSections = (fullText: string) => {
-  const result = { story: "", forecast: "", simulation: "", cofounder: "", general: "", slideshow: "", findings: "" };
+  const result = { story: "", forecast: "", simulation: "", cofounder: "", general: "", slideshow: "", findings: "", code: "", document: "", image: "" };
   const sectionMap: Record<string, keyof typeof result> = {
     "DATA STORY": "story",
     STORY: "story",
@@ -258,6 +258,25 @@ const parseSections = (fullText: string) => {
     SLIDES: "slideshow",
     "KEY FINDINGS": "findings",
     FINDINGS: "findings",
+    "CODE OVERVIEW": "code",
+    "ARCHITECTURE": "code",
+    "LINE-BY-LINE": "code",
+    "FUNCTION EXPLANATION": "code",
+    "ISSUES & BUGS": "code",
+    "IMPROVEMENT SUGGESTIONS": "code",
+    "COMPLEXITY": "code",
+    "DOCUMENT SUMMARY": "document",
+    "KEY POINTS": "document",
+    "ENTITIES & FACTS": "document",
+    "ENTITIES": "document",
+    "SENTIMENT": "document",
+    "QUESTIONS THIS DOCUMENT": "document",
+    "ACTION ITEMS": "document",
+    TAKEAWAYS: "document",
+    "IMAGE DESCRIPTION": "image",
+    "OBJECTS & TEXT": "image",
+    "CHART/DIAGRAM DATA": "image",
+    "CONTEXT & INTERPRETATION": "image",
   };
 
   let currentSection: keyof typeof result = "general";
