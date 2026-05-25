@@ -673,22 +673,28 @@ const Analytics = () => {
   const exportData = hasData ? combinedData : (tableData?.rows || []);
   const exportHeaders = hasData ? ["month", "revenue", "expense"] : tableData?.headers;
 
-  const runAutoAnalysis = useCallback(async (sourceFileData: string, financial: boolean) => {
-    if (!sourceFileData.trim()) return;
+  const runAutoAnalysis = useCallback(async (sourceFileData: string, type: typeof contentType, images: { name: string; dataUrl: string }[]) => {
+    if (!sourceFileData.trim() && images.length === 0) return;
 
     const runId = Date.now();
     autoRunIdRef.current = runId;
     setIsAutoAnalyzing(true);
 
-    const prompt = financial ? AUTO_ANALYZE_FINANCIAL : AUTO_ANALYZE_GENERAL;
+    const promptByType: Record<string, string> = {
+      financial: AUTO_ANALYZE_FINANCIAL,
+      dataset: AUTO_ANALYZE_GENERAL,
+      code: AUTO_ANALYZE_CODE,
+      document: AUTO_ANALYZE_DOCUMENT,
+      image: AUTO_ANALYZE_IMAGE,
+    };
+    const prompt = promptByType[type] || AUTO_ANALYZE_GENERAL;
 
     let assistantSoFar = "";
     await streamAnalyticsChat({
       messages: [{ role: "user", content: prompt }],
       fileData: sourceFileData,
-      onDelta: (chunk) => {
-        assistantSoFar += chunk;
-      },
+      images,
+      onDelta: (chunk) => { assistantSoFar += chunk; },
       onDone: () => {
         if (autoRunIdRef.current !== runId) return;
         setIsAutoAnalyzing(false);
@@ -697,14 +703,24 @@ const Analytics = () => {
         const cleanText = text.trim();
         const sections = parseSections(cleanText);
 
-        setAiCharts(financial ? charts : []);
-        setAiStory(sections.story || sections.general || cleanText);
+        setAiCharts(type === "financial" || type === "image" ? charts : []);
+        setAiStory(sections.story || (type === "financial" || type === "dataset" ? (sections.general || cleanText) : ""));
         setAiForecast(sections.forecast);
         setAiSimulation(sections.simulation);
         setAiCofounder(sections.cofounder);
         setAiSlideshow(sections.slideshow);
         setAiFindings(sections.findings);
-        setActiveTab("story");
+        setAiCode(sections.code || (type === "code" ? cleanText : ""));
+        setAiDocument(sections.document || (type === "document" ? cleanText : ""));
+        setAiImage(sections.image || (type === "image" ? cleanText : ""));
+
+        const firstTab: TabKey =
+          type === "code" ? "code"
+          : type === "document" ? "document"
+          : type === "image" ? "image"
+          : type === "financial" ? "story"
+          : "story";
+        setActiveTab(firstTab);
         toast.success("Automatic analysis is ready.");
       },
       onError: (error) => {
@@ -716,15 +732,15 @@ const Analytics = () => {
   }, []);
 
   useEffect(() => {
-    if (!fileData) {
+    if (!fileData && imagePayloads.length === 0) {
       lastAutoDataRef.current = "";
       return;
     }
-
-    if (isAutoAnalyzing || lastAutoDataRef.current === fileData) return;
-    lastAutoDataRef.current = fileData;
-    void runAutoAnalysis(fileData, isFinancialData);
-  }, [fileData, isAutoAnalyzing, isFinancialData, runAutoAnalysis]);
+    const key = `${fileData}::${imagePayloads.map(i => i.name).join("|")}::${contentType}`;
+    if (isAutoAnalyzing || lastAutoDataRef.current === key) return;
+    lastAutoDataRef.current = key;
+    void runAutoAnalysis(fileData, contentType, imagePayloads);
+  }, [fileData, imagePayloads, isAutoAnalyzing, contentType, runAutoAnalysis]);
 
   const processFiles = async (files: File[]) => {
     if (!files.length) return;
