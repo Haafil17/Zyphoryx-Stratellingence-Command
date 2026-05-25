@@ -127,8 +127,18 @@ const AMOUNT_KEYWORDS = ["amount", "amt", "value", "total", "net"];
 const FILE_REVENUE_KEYWORDS = [...REVENUE_KEYWORDS, "receipt", "receipts"];
 const FILE_EXPENSE_KEYWORDS = [...EXPENSE_KEYWORDS, "expence", "expenses"];
 
-type TabKey = "overview" | "story" | "table" | "forecast" | "simulation" | "cofounder" | "slideshow" | "findings";
+type TabKey = "overview" | "story" | "table" | "forecast" | "simulation" | "cofounder" | "slideshow" | "findings" | "code" | "image" | "document";
 type StructuredRow = Record<string, string>;
+const IMAGE_EXTS = ["jpeg", "jpg", "png", "gif", "webp", "svg"];
+const CODE_EXTS_SET = new Set(["js","jsx","ts","tsx","py","java","cpp","cc","c","h","hpp","cs","go","rs","rb","php","swift","kt","scala","sh","bash","zsh","sql","html","htm","css","scss","sass","less","vue","svelte","yaml","yml","toml","xml","r","m","mm","pl","lua","dart"]);
+
+const fileToDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Failed to read image"));
+    reader.readAsDataURL(file);
+  });
 
 const parseNumericValue = (value: unknown): number => {
   const normalized = String(value ?? "")
