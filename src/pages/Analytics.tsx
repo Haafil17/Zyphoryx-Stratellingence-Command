@@ -63,11 +63,17 @@ import { useFileDrop } from "@/hooks/use-file-drop";
 import ExportButtons from "@/components/ExportButtons";
 import SavedAnalysesPanel from "@/components/SavedAnalysesPanel";
 
-const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg";
+const ACCEPTED_FILES = ".csv,.json,.txt,.tsv,.pdf,.xlsx,.xls,.jpeg,.jpg,.png,.gif,.webp,.svg,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.cc,.c,.h,.hpp,.cs,.go,.rs,.rb,.php,.swift,.kt,.scala,.sh,.bash,.sql,.html,.htm,.css,.scss,.sass,.less,.vue,.svelte,.md,.yaml,.yml,.toml,.xml,.r,.lua,.dart";
 const AUTO_ANALYZE_FINANCIAL =
-  "Run the full autonomous analysis now. Use these exact sections in this order: ## DATA STORY, ## FORECAST, ## SIMULATION, ## STRATEGY. Generate 3 to 4 chart blocks using only exact values from the uploaded data. Include concise recommendations in STRATEGY.";
+  "Run the full autonomous analysis now. This is FINANCIAL data. Use these exact sections in this order: ## DATA STORY, ## FORECAST, ## SIMULATION, ## STRATEGY. Generate 3 to 4 chart blocks using only exact values from the uploaded data.";
 const AUTO_ANALYZE_GENERAL =
-  "Run the full autonomous analysis now. This is NON-FINANCIAL data. Use these exact sections in this order: ## DATA STORY (minimum 800 words — explain WHAT the dataset is about, WHO it concerns, WHY it matters, the time period or scope, total records, columns and what each represents, distributions, outliers, correlations, group comparisons, demographic or category breakdowns, temporal trends, surprising patterns, data quality notes, and meaningful interpretation of every key field), ## KEY FINDINGS (10-15 deep bullet points, each citing specific numbers, percentages, and comparisons from the actual data), ## SLIDESHOW (8-10 slides — title slide, context slide, methodology slide, 4-6 insight slides each with title + key point + 3 bullet points with data, and a conclusion slide), ## RECOMMENDATIONS (8-10 concrete actionable recommendations grouped by stakeholder or theme, each with rationale tied to the data). Do NOT generate any chart blocks. Focus entirely on rich narrative storytelling, deep findings, and a complete presentation.";
+  "Run the full autonomous analysis now. This is NON-FINANCIAL structured DATASET data. Use these exact sections in this order: ## DATA STORY (800+ words), ## KEY FINDINGS (10-15 bullets with exact numbers), ## SLIDESHOW (8-10 slides), ## RECOMMENDATIONS (8-10 actions). Do NOT generate chart blocks.";
+const AUTO_ANALYZE_CODE =
+  "Run the full autonomous analysis now. This is SOURCE CODE. Use these exact sections in this order: ## CODE OVERVIEW, ## ARCHITECTURE & STRUCTURE, ## LINE-BY-LINE / FUNCTION EXPLANATION (walk through every function with fenced code), ## ISSUES & BUGS, ## IMPROVEMENT SUGGESTIONS (with BEFORE/AFTER snippets), ## COMPLEXITY & QUALITY METRICS. Be exhaustive and quote the actual code.";
+const AUTO_ANALYZE_DOCUMENT =
+  "Run the full autonomous analysis now. This is a DOCUMENT (prose). Use these exact sections in this order: ## DOCUMENT SUMMARY (TL;DR + 600+ word summary), ## KEY POINTS (10-15 bullets), ## ENTITIES & FACTS (markdown table), ## SENTIMENT & TONE, ## QUESTIONS THIS DOCUMENT ANSWERS (8-12 Q&A), ## ACTION ITEMS / TAKEAWAYS.";
+const AUTO_ANALYZE_IMAGE =
+  "Run the full autonomous analysis now on the attached IMAGE(S). Use these exact sections in this order: ## IMAGE DESCRIPTION (detailed per image), ## OBJECTS & TEXT DETECTED (with OCR-quoted text), ## CHART/DIAGRAM DATA (extract into a markdown table and emit a ```chart``` block if the image contains a chart), ## CONTEXT & INTERPRETATION, ## RECOMMENDATIONS.";
 
 const COLORS = [
   "hsl(220,80%,60%)",
@@ -121,8 +127,18 @@ const AMOUNT_KEYWORDS = ["amount", "amt", "value", "total", "net"];
 const FILE_REVENUE_KEYWORDS = [...REVENUE_KEYWORDS, "receipt", "receipts"];
 const FILE_EXPENSE_KEYWORDS = [...EXPENSE_KEYWORDS, "expence", "expenses"];
 
-type TabKey = "overview" | "story" | "table" | "forecast" | "simulation" | "cofounder" | "slideshow" | "findings";
+type TabKey = "overview" | "story" | "table" | "forecast" | "simulation" | "cofounder" | "slideshow" | "findings" | "code" | "image" | "document";
 type StructuredRow = Record<string, string>;
+const IMAGE_EXTS = ["jpeg", "jpg", "png", "gif", "webp", "svg"];
+const CODE_EXTS_SET = new Set(["js","jsx","ts","tsx","py","java","cpp","cc","c","h","hpp","cs","go","rs","rb","php","swift","kt","scala","sh","bash","zsh","sql","html","htm","css","scss","sass","less","vue","svelte","yaml","yml","toml","xml","r","m","mm","pl","lua","dart"]);
+
+const fileToDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Failed to read image"));
+    reader.readAsDataURL(file);
+  });
 
 const parseNumericValue = (value: unknown): number => {
   const normalized = String(value ?? "")
@@ -220,7 +236,7 @@ const findFirstNumericCol = (headers: string[], rows: StructuredRow[], excludeId
 };
 
 const parseSections = (fullText: string) => {
-  const result = { story: "", forecast: "", simulation: "", cofounder: "", general: "", slideshow: "", findings: "" };
+  const result = { story: "", forecast: "", simulation: "", cofounder: "", general: "", slideshow: "", findings: "", code: "", document: "", image: "" };
   const sectionMap: Record<string, keyof typeof result> = {
     "DATA STORY": "story",
     STORY: "story",
@@ -242,6 +258,25 @@ const parseSections = (fullText: string) => {
     SLIDES: "slideshow",
     "KEY FINDINGS": "findings",
     FINDINGS: "findings",
+    "CODE OVERVIEW": "code",
+    "ARCHITECTURE": "code",
+    "LINE-BY-LINE": "code",
+    "FUNCTION EXPLANATION": "code",
+    "ISSUES & BUGS": "code",
+    "IMPROVEMENT SUGGESTIONS": "code",
+    "COMPLEXITY": "code",
+    "DOCUMENT SUMMARY": "document",
+    "KEY POINTS": "document",
+    "ENTITIES & FACTS": "document",
+    "ENTITIES": "document",
+    "SENTIMENT": "document",
+    "QUESTIONS THIS DOCUMENT": "document",
+    "ACTION ITEMS": "document",
+    TAKEAWAYS: "document",
+    "IMAGE DESCRIPTION": "image",
+    "OBJECTS & TEXT": "image",
+    "CHART/DIAGRAM DATA": "image",
+    "CONTEXT & INTERPRETATION": "image",
   };
 
   let currentSection: keyof typeof result = "general";
@@ -370,6 +405,10 @@ const Analytics = () => {
   const [aiCofounder, setAiCofounder] = useState("");
   const [aiSlideshow, setAiSlideshow] = useState("");
   const [aiFindings, setAiFindings] = useState("");
+  const [aiCode, setAiCode] = useState("");
+  const [aiDocument, setAiDocument] = useState("");
+  const [aiImage, setAiImage] = useState("");
+  const [imagePayloads, setImagePayloads] = useState<{ name: string; dataUrl: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isAutoAnalyzing, setIsAutoAnalyzing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -464,14 +503,24 @@ const Analytics = () => {
   }, [expenseData, revenueData]);
 
   const hasData = revenueData.length > 0 || expenseData.length > 0;
-  const hasAnalysis = aiCharts.length > 0 || Boolean(aiStory || aiForecast || aiSimulation || aiCofounder || aiSlideshow || aiFindings);
+  const hasAnalysis = aiCharts.length > 0 || Boolean(aiStory || aiForecast || aiSimulation || aiCofounder || aiSlideshow || aiFindings || aiCode || aiDocument || aiImage);
 
-  // Detect if uploaded data is financial
-  const isFinancialData = useMemo(() => {
-    if (hasData) return true; // Revenue/expense columns were detected
+  // Detect the dominant content type
+  const contentType = useMemo<"financial" | "dataset" | "code" | "document" | "image" | "empty">(() => {
+    if (uploadedFiles.length === 0) return "empty";
+    const exts = uploadedFiles.map(f => f.type.toLowerCase());
+    const imageCount = exts.filter(e => IMAGE_EXTS.includes(e)).length;
+    const codeCount = exts.filter(e => CODE_EXTS_SET.has(e)).length;
+    if (imageCount > 0 && imageCount >= uploadedFiles.length / 2) return "image";
+    if (codeCount > 0 && codeCount >= uploadedFiles.length / 2) return "code";
+    if (hasData) return "financial";
     const allContent = uploadedFiles.map(f => f.content).join(" ").toLowerCase();
-    return FINANCIAL_KEYWORDS.some(kw => allContent.includes(kw));
-  }, [uploadedFiles, hasData]);
+    if (FINANCIAL_KEYWORDS.some(kw => allContent.includes(kw)) && tableData) return "financial";
+    if (tableData) return "dataset";
+    return "document";
+  }, [uploadedFiles, hasData, tableData]);
+
+  const isFinancialData = contentType === "financial";
   const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0);
   const totalExpense = expenseData.reduce((sum, item) => sum + item.expense, 0);
   const netProfit = totalRevenue - totalExpense;
@@ -624,22 +673,28 @@ const Analytics = () => {
   const exportData = hasData ? combinedData : (tableData?.rows || []);
   const exportHeaders = hasData ? ["month", "revenue", "expense"] : tableData?.headers;
 
-  const runAutoAnalysis = useCallback(async (sourceFileData: string, financial: boolean) => {
-    if (!sourceFileData.trim()) return;
+  const runAutoAnalysis = useCallback(async (sourceFileData: string, type: typeof contentType, images: { name: string; dataUrl: string }[]) => {
+    if (!sourceFileData.trim() && images.length === 0) return;
 
     const runId = Date.now();
     autoRunIdRef.current = runId;
     setIsAutoAnalyzing(true);
 
-    const prompt = financial ? AUTO_ANALYZE_FINANCIAL : AUTO_ANALYZE_GENERAL;
+    const promptByType: Record<string, string> = {
+      financial: AUTO_ANALYZE_FINANCIAL,
+      dataset: AUTO_ANALYZE_GENERAL,
+      code: AUTO_ANALYZE_CODE,
+      document: AUTO_ANALYZE_DOCUMENT,
+      image: AUTO_ANALYZE_IMAGE,
+    };
+    const prompt = promptByType[type] || AUTO_ANALYZE_GENERAL;
 
     let assistantSoFar = "";
     await streamAnalyticsChat({
       messages: [{ role: "user", content: prompt }],
       fileData: sourceFileData,
-      onDelta: (chunk) => {
-        assistantSoFar += chunk;
-      },
+      images,
+      onDelta: (chunk) => { assistantSoFar += chunk; },
       onDone: () => {
         if (autoRunIdRef.current !== runId) return;
         setIsAutoAnalyzing(false);
@@ -648,14 +703,24 @@ const Analytics = () => {
         const cleanText = text.trim();
         const sections = parseSections(cleanText);
 
-        setAiCharts(financial ? charts : []);
-        setAiStory(sections.story || sections.general || cleanText);
+        setAiCharts(type === "financial" || type === "image" ? charts : []);
+        setAiStory(sections.story || (type === "financial" || type === "dataset" ? (sections.general || cleanText) : ""));
         setAiForecast(sections.forecast);
         setAiSimulation(sections.simulation);
         setAiCofounder(sections.cofounder);
         setAiSlideshow(sections.slideshow);
         setAiFindings(sections.findings);
-        setActiveTab("story");
+        setAiCode(sections.code || (type === "code" ? cleanText : ""));
+        setAiDocument(sections.document || (type === "document" ? cleanText : ""));
+        setAiImage(sections.image || (type === "image" ? cleanText : ""));
+
+        const firstTab: TabKey =
+          type === "code" ? "code"
+          : type === "document" ? "document"
+          : type === "image" ? "image"
+          : type === "financial" ? "story"
+          : "story";
+        setActiveTab(firstTab);
         toast.success("Automatic analysis is ready.");
       },
       onError: (error) => {
@@ -667,15 +732,15 @@ const Analytics = () => {
   }, []);
 
   useEffect(() => {
-    if (!fileData) {
+    if (!fileData && imagePayloads.length === 0) {
       lastAutoDataRef.current = "";
       return;
     }
-
-    if (isAutoAnalyzing || lastAutoDataRef.current === fileData) return;
-    lastAutoDataRef.current = fileData;
-    void runAutoAnalysis(fileData, isFinancialData);
-  }, [fileData, isAutoAnalyzing, isFinancialData, runAutoAnalysis]);
+    const key = `${fileData}::${imagePayloads.map(i => i.name).join("|")}::${contentType}`;
+    if (isAutoAnalyzing || lastAutoDataRef.current === key) return;
+    lastAutoDataRef.current = key;
+    void runAutoAnalysis(fileData, contentType, imagePayloads);
+  }, [fileData, imagePayloads, isAutoAnalyzing, contentType, runAutoAnalysis]);
 
   const processFiles = async (files: File[]) => {
     if (!files.length) return;
@@ -689,17 +754,26 @@ const Analytics = () => {
     setAiCofounder("");
     setAiSlideshow("");
     setAiFindings("");
+    setAiCode("");
+    setAiDocument("");
+    setAiImage("");
+    setImagePayloads([]);
     setActiveTab("overview");
 
     const parsed: { name: string; content: string; type: string }[] = [];
+    const newImages: { name: string; dataUrl: string }[] = [];
 
     for (const file of files) {
       const ext = file.name.split(".").pop()?.toLowerCase() || "";
-      const isImage = ["jpeg", "jpg", "png", "gif", "webp", "svg"].includes(ext);
+      const isImg = IMAGE_EXTS.includes(ext);
       const isExcel = ["xlsx", "xls"].includes(ext);
 
       try {
-        if (isImage) {
+        if (isImg) {
+          try {
+            const dataUrl = await fileToDataUrl(file);
+            newImages.push({ name: file.name, dataUrl });
+          } catch { /* ignore */ }
           parsed.push({ name: file.name, content: `[Image: ${file.name}]`, type: ext });
           continue;
         }
@@ -729,6 +803,7 @@ const Analytics = () => {
     }
 
     setUploadedFiles(parsed);
+    setImagePayloads(newImages);
     setUploading(false);
 
     if (parsed.length > 0) {
@@ -748,6 +823,7 @@ const Analytics = () => {
   const removeFile = (index: number) => {
     lastAutoDataRef.current = "";
     setUploadedFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index));
+    setImagePayloads([]);
     setAiCharts([]);
     setAiStory("");
     setAiForecast("");
@@ -755,6 +831,9 @@ const Analytics = () => {
     setAiCofounder("");
     setAiSlideshow("");
     setAiFindings("");
+    setAiCode("");
+    setAiDocument("");
+    setAiImage("");
     setActiveTab("overview");
   };
 
@@ -789,22 +868,39 @@ const Analytics = () => {
     return FileText;
   };
 
-  const tabs: { key: TabKey; icon: typeof BarChart3; label: string }[] = isFinancialData
-    ? [
-        { key: "overview", icon: BarChart3, label: "Overview" },
-        { key: "story", icon: BookOpen, label: "Data Story" },
-        { key: "forecast", icon: TrendingUp, label: "Forecast" },
-        { key: "simulation", icon: Shuffle, label: "Simulation" },
-        { key: "cofounder", icon: Brain, label: "Strategy" },
-        { key: "table", icon: Table, label: "Data Table" },
-      ]
-    : [
-        { key: "story", icon: BookOpen, label: "Data Story" },
-        { key: "findings", icon: Zap, label: "Key Findings" },
-        { key: "slideshow", icon: Layers, label: "Slideshow" },
-        { key: "cofounder", icon: Brain, label: "Recommendations" },
-        { key: "table", icon: Table, label: "Data Table" },
-      ];
+  const tabsByType: Record<typeof contentType, { key: TabKey; icon: typeof BarChart3; label: string }[]> = {
+    empty: [],
+    financial: [
+      { key: "overview", icon: BarChart3, label: "Overview" },
+      { key: "story", icon: BookOpen, label: "Data Story" },
+      { key: "forecast", icon: TrendingUp, label: "Forecast" },
+      { key: "simulation", icon: Shuffle, label: "Simulation" },
+      { key: "cofounder", icon: Brain, label: "Strategy" },
+      { key: "table", icon: Table, label: "Data Table" },
+    ],
+    dataset: [
+      { key: "story", icon: BookOpen, label: "Data Story" },
+      { key: "findings", icon: Zap, label: "Key Findings" },
+      { key: "slideshow", icon: Layers, label: "Slideshow" },
+      { key: "cofounder", icon: Brain, label: "Recommendations" },
+      { key: "table", icon: Table, label: "Data Table" },
+    ],
+    code: [
+      { key: "code", icon: FileText, label: "Code Explanation" },
+      { key: "cofounder", icon: Brain, label: "Improvements" },
+    ],
+    document: [
+      { key: "document", icon: BookOpen, label: "Document Analysis" },
+      { key: "findings", icon: Zap, label: "Key Points" },
+      { key: "cofounder", icon: Brain, label: "Takeaways" },
+    ],
+    image: [
+      { key: "image", icon: FileImage, label: "Image Analysis" },
+      { key: "overview", icon: BarChart3, label: "Detected Charts" },
+      { key: "cofounder", icon: Brain, label: "Recommendations" },
+    ],
+  };
+  const tabs = tabsByType[contentType] || tabsByType.dataset;
 
   const renderMarkdownContent = (content: string, emptyIcon: typeof BookOpen, emptyTitle: string, emptyDesc: string) => {
     if (content) {
@@ -1294,7 +1390,63 @@ const Analytics = () => {
                   )}
                 </div>
               )}
+
+              {activeTab === "code" && (
+                <div className="glass-card p-8 min-h-[420px]">
+                  <div className="flex items-center gap-2 mb-6">
+                    <FileText className="h-5 w-5 text-[hsl(220,80%,60%)]" />
+                    <h3 className="text-lg font-black text-foreground">Code Explanation & Review</h3>
+                  </div>
+                  {renderMarkdownContent(
+                    aiCode,
+                    FileText,
+                    "No Code Analysis Yet",
+                    uploadedFiles.length > 0 ? "Walking through your code now — architecture, function-by-function explanation, bugs and refactor suggestions." : "Upload source code files (.js, .ts, .py, .java, .cpp, .go, .rs, .sql, etc.) to get a full code review.",
+                  )}
+                </div>
+              )}
+
+              {activeTab === "document" && (
+                <div className="glass-card p-8 min-h-[420px]">
+                  <div className="flex items-center gap-2 mb-6">
+                    <BookOpen className="h-5 w-5 text-[hsl(280,70%,65%)]" />
+                    <h3 className="text-lg font-black text-foreground">Document Analysis</h3>
+                  </div>
+                  {renderMarkdownContent(
+                    aiDocument,
+                    BookOpen,
+                    "No Document Analysis Yet",
+                    uploadedFiles.length > 0 ? "Summarizing your document, extracting entities, key points, and takeaways." : "Upload a PDF, TXT, or MD document to get a deep summary, entity extraction, and Q&A.",
+                  )}
+                </div>
+              )}
+
+              {activeTab === "image" && (
+                <div className="glass-card p-8 min-h-[420px] space-y-6">
+                  <div className="flex items-center gap-2">
+                    <FileImage className="h-5 w-5 text-[hsl(25,95%,58%)]" />
+                    <h3 className="text-lg font-black text-foreground">Image Analysis (Vision)</h3>
+                  </div>
+                  {imagePayloads.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {imagePayloads.map((img) => (
+                        <div key={img.name} className="rounded-xl overflow-hidden border border-border/60 bg-secondary/30">
+                          <img src={img.dataUrl} alt={img.name} className="w-full h-40 object-cover" />
+                          <p className="text-xs px-3 py-2 text-muted-foreground font-bold truncate">{img.name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {renderMarkdownContent(
+                    aiImage,
+                    FileImage,
+                    "No Image Analysis Yet",
+                    uploadedFiles.length > 0 ? "AI vision is describing your images, extracting text, and reading any charts." : "Upload images (PNG, JPG, WebP, GIF) — AI vision will describe them, OCR text, and extract chart data.",
+                  )}
+                </div>
+              )}
             </div>
+
 
             <div className="space-y-4">
               <AIChatPanel
